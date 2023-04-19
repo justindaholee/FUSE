@@ -10,7 +10,7 @@ The Berdnt lab developed a google colaboratory notebook that acts as a standalon
   
 ### *Motivations*
 - Population analysis-based platform for fluorescence data
-- Generates easy to use platform 
+- Generates easy-to-use platform 
 - Aligns methods used to analyze fluorescent data
 - Novel frame-by-frame cell identification algorithm that can be used with cellpose segmentation 
 - Open source + Free platform

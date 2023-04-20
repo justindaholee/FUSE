@@ -43,8 +43,20 @@ def extract_cells(image_path, mask_path, output_file, channel):
 
                 hf.create_dataset(f"frame_{frame_idx}_cell_{cell_id}", data=rescaled_image)
 
-input_image_path = "/content/drive/Shareddrives/H2O2/??FLOPSEE??/2023_04_17_CellImages/20230417_oROSGrFluorobrite cellovernight_tseries/2023-04-18_EXP_test/segmentations/THE_S10_stack.tif"
-input_mask_path = "/content/drive/Shareddrives/H2O2/??FLOPSEE??/2023_04_17_CellImages/20230417_oROSGrFluorobrite cellovernight_tseries/2023-04-18_EXP_test/segmentations/seg_S10_stack.tif"
-output_file = "/content/drive/Shareddrives/H2O2/??FLOPSEE??/2023_04_17_CellImages/20230417_oROSGrFluorobrite cellovernight_tseries/2023-04-18_EXP_test/segmentations/cells.h5"
+input_image_path = "data\RFP_GFP_MIDDLE5\RFP_GFP_MIDDLE5.tif"
+input_mask_path = "data\RFP_GFP_MIDDLE5\seg_RFP_GFP_MIDDLE5.tif"
+output_file = "data\RFP_GFP_MIDDLE5\cells_RFP_GFP_MIDDLE5.hdf5"
 
-# extract_cells(input_image_path, input_mask_path, output_file, 0)
+extract_cells(input_image_path, input_mask_path, output_file, 0)
+
+# with h5py.File(output_file, 'r') as hf:
+#     # Access a specific image using its name (e.g., 'frame_0_cell_1')
+#     image_name = 'frame_0_cell_1'
+#     if image_name in hf:
+#         image_data = np.array(hf[image_name])
+#         # Now you can use the image_data numpy array as desired, e.g., convert it to a PIL image
+#         img = Image.fromarray(image_data)
+#         # Preview the image
+#         img.show()
+#     else:
+#         print(f"{image_name} not found in the h5py file.")

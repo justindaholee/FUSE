@@ -1,4 +1,7 @@
 from Lineage_Library import Cell, Library
+import procedures.tif_handling
+import procedures.cell_extraction
+
 
 cells_path = "data\RFP_GFP_MIDDLE5\cells_RFP_GFP_MIDDLE5.hdf5" # (img name e.g., 'frame_0_cell_1')
 masks_path = "data\RFP_GFP_MIDDLE5\seg_RFP_GFP_MIDDLE5.tif"

@@ -1,6 +1,6 @@
 <h1>
   <img src=".\logo\fluora_nobg.png" alt="Your Alt Text" height="25">
-  FLUORA: Live Cell Image Analysis for Fluorscent Cells
+  <b>FLUORA</b>: Live Cell Image Analysis for Fluorscent Cells
 </h1>
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
@@ -22,4 +22,4 @@ The Berdnt lab developed a google colaboratory notebook that acts as a standalon
 
 
 ![Alt text](https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png)
-![Alt text](.\logo\fluora_with_text.svg)
+![Alt text](.logo\fluora_with_text.svg)

@@ -1,8 +1,17 @@
 import os
+import h5py
 import numpy as np
 from PIL import Image
-import h5py
-import procedures.tif_handling
+
+def read_multiframe_tiff(filename):
+    img = Image.open(filename)
+    frames = []
+
+    for i in range(img.n_frames):
+        img.seek(i)
+        frames.append(np.array(img))
+
+    return np.array(frames)
 
 def rescale_image(image):
     min_val, max_val = np.min(image), np.max(image)
@@ -33,21 +42,3 @@ def extract_cells(image_path, mask_path, output_file, channel):
                 rescaled_image = rescale_image(cell_image)
 
                 hf.create_dataset(f"frame_{frame_idx}_cell_{cell_id}", data=rescaled_image)
-
-# input_image_path = "data\RFP_GFP_MIDDLE5\RFP_GFP_MIDDLE5.tif"
-# input_mask_path = "data\RFP_GFP_MIDDLE5\seg_RFP_GFP_MIDDLE5.tif"
-# output_file = "data\RFP_GFP_MIDDLE5\cells_RFP_GFP_MIDDLE5.hdf5"
-
-# extract_cells(input_image_path, input_mask_path, output_file, 0)
-
-# with h5py.File(output_file, 'r') as hf:
-#     # Access a specific image using its name (e.g., 'frame_0_cell_1')
-#     image_name = 'frame_0_cell_1'
-#     if image_name in hf:
-#         image_data = np.array(hf[image_name])
-#         # Now you can use the image_data numpy array as desired, e.g., convert it to a PIL image
-#         img = Image.fromarray(image_data)
-#         # Preview the image
-#         img.show()
-#     else:
-#         print(f"{image_name} not found in the h5py file.")

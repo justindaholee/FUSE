@@ -19,7 +19,7 @@ class Library:
 
     def add_cell(self, cell):
         if cell.lineage_id > len(self.lineages):
-            self.lineages.extend(deque() for _ in range(cell.lineage_id - len (self.lineages)))
+            self.lineages.extend(deque() for _ in range(cell.lineage_id - len(self.lineages)))
         self.lineages[cell.lineage_id-1].append(cell)
 
     def recent(self, lineage_id):

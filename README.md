@@ -22,4 +22,4 @@ The Berdnt lab developed a google colaboratory notebook that acts as a standalon
 
 
 ![Alt text](https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png)
-![fluora_with_text](https://user-images.githubusercontent.com/77214955/233546257-75e14c50-a5e3-4650-a1db-a98b19dba1e8.svg)
+<img src=".\logo\fluora_with_text.png" alt="FLUORA logo">

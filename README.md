@@ -3,7 +3,7 @@
   <b>FLUORA</b>: Live Cell Image Analysis for Fluorscent Cells
 </h1>
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
-[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### *Keywords*: 
 in vitro analysis algorithm, transparent data handling, high-throughput, unbiased, user-friendly, visual phenotyping

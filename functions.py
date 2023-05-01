@@ -121,7 +121,7 @@ def cosine_similarity(vec1, vec2):
     Returns:
         float, the cosine similarity between vec1 and vec2
     """
-    dot_product = np.dot(vec1, vec2)
+    dot_product = np.dot(np.squeeze(vec1), np.squeeze(vec2))
     vec1_norm = np.linalg.norm(vec1)
     vec2_norm = np.linalg.norm(vec2)
     similarity = dot_product / (vec1_norm * vec2_norm)

@@ -11,6 +11,7 @@ from keras.callbacks import EarlyStopping
 from tensorflow import keras
 from Lineage_Library import Cell, Library
 from functions import read_multiframe_tiff, extract_cells, calculate_iou, cosine_similarity
+output = open("output.txt","w")
 
 
 # USER INPUTS #################################################################
@@ -32,6 +33,7 @@ search_radius = 100
 
 
 ### PART 1: Import data and Preprocessing######################################
+print("IMPORTING DATA AND PREPROCESSING...")
 
 # TODO: Check that data exists in the correct format ###############
 
@@ -42,8 +44,10 @@ dir_path, base_name = os.path.split(imgs_path)
 
 # 2. Pre-processing informational data
 info_df = info_df[info_df['Channel'] == channel]
-df = info_df[['Frame', 'ROI']]
-df[['x', 'y']] = info_df['Centroid'].str.strip('()').str.split(', ', expand=True).astype(float)
+df = info_df[['Frame', 'ROI']].copy()
+centroids = info_df['Centroid'].str.strip('()').str.split(', ', expand=True).astype(float)
+df[['x', 'y']] = centroids
+
 
 # 3. Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
 cells_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_cells.hdf5")
@@ -57,7 +61,7 @@ with h5py.File(cells_path, 'r') as hf:
 x_train = np.array(img_list)
 x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
 x_train, x_test = train_test_split(x_train, test_size=0.2, random_state=42)
-del img_list # delete img data to clear RAM
+del centroids, img_list # delete data to clear RAM
 
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
 
@@ -80,12 +84,14 @@ autoencoder.compile(loss="binary_crossentropy",
                    optimizer='adam')
 history = autoencoder.fit(x_train, x_train, epochs=300,
                                   validation_data=[x_test, x_test],
-                                  callbacks=[early_stop]) 
+                                  callbacks=[early_stop],
+                                  verbose=0) 
 model_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_model.h5")
 del x_train, x_test
 
-
+print("PREPROCESSING COMPLETE.")
 ### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
+print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
 
 # Initialize library for tracking lineages
 lib = Library(masks[0], df)
@@ -93,15 +99,18 @@ lib = Library(masks[0], df)
 prev_mask = masks[0]
 for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                       desc="Processing Frames", unit="frame", ncols=80):
-# for i, mask in enumerate(masks[1:]):
     current_frame = i + 1;
     temp_df = df[df['Frame'] == current_frame]
 
     for recent_cell in lib.all_recent():
         prev_mask = masks[recent_cell['frame']]
-        # TODO: get visual features using encoder
-        # recent_cell_img = hf[frame_0_cell_1][]
-        # recent_cell_vec = encoder.predict()
+
+        with h5py.File(cells_path, 'r') as hf:
+            key = 'frame_' + str(recent_cell['frame']) + '_cell_' + str(recent_cell['cell_id'])
+            cell_img = np.array(hf[key])
+            cell_img = cell_img.reshape(1, 28, 28, 1)
+        recent_vec = encoder.predict(cell_img, verbose=0)
+
         scores = []
         for new_cell in np.unique(mask)[1:]:
             if new_cell != 0:
@@ -109,33 +118,45 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                 distance = math.sqrt((x_new - recent_cell['x'])**2 + (y_new - recent_cell['y'])**2)
                 
                 if distance < search_radius:
-                    iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, new_cell, mask)
+                    with h5py.File(cells_path, 'r') as hf:
+                        key = 'frame_' + str(current_frame) + '_cell_' + str(new_cell)
+                        cell_img = np.array(hf[key])
+                        cell_img = cell_img.reshape(1, 28, 28, 1)
+                    new_vec = encoder.predict(cell_img, verbose=0)
                     
-                    if (iou_score > 0) and (lib.is_recent_cell(current_frame, new_cell-1) == -1):
+                    iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, new_cell, mask)
+                    visual_score = cosine_similarity(recent_vec, new_vec)
+  
+                    if (iou_score > 0) and (lib.is_recent_cell(current_frame, new_cell) == -1):
                         scores.append({
                             'next_cell_id': new_cell,
                             'next_cell_x': x_new,
                             'next_cell_y': y_new,
                             'lineage_id': recent_cell['lineage_id'],
                             'iou_score': iou_score,
+                            'visual_score': visual_score,
                             'distance': distance
                         })
         
+        # TODO: convert decision sequence into a function
         if (len(scores) == 1) and (scores[0]['iou_score'] > 0.3):
-            # print(f"MATCH: Cell #{recent_cell['cell_id']} found in frame {current_frame}.")
+            # output.write(f"\nMATCH: Cell #{recent_cell['cell_id']} found in frame {current_frame}.\n")
             lib.add_cell(Cell(
                 cell_id = scores[0]['next_cell_id'],
                 lineage_id = recent_cell['lineage_id'],
                 frame = current_frame,
                 x = scores[0]['next_cell_x'],
-                y = scores[0]['next_cell_y']
+                y = scores[0]['next_cell_y'],
             ))
         elif (len(scores) > 1):
-            # print(f"MATCH: Found {len(scores)} potential cells for cell #{recent_cell['cell_id']}.")
-            pass
+            output.write(f"\nMATCH: Found {len(scores)} potential cells for lineage #{recent_cell['lineage_id']} in frame {current_frame}.\n")
+            for potential_cell in scores:
+                output.write(f"    Potential cell ID#{potential_cell['next_cell_id']}  Visual Score: {potential_cell['visual_score']}\n")
         else:
-            # print(f"NO MATCH: No potential cells found for cell #{recent_cell['cell_id']}."
+            # output.write(f"\nNO MATCH: No potential cells found for cell #{recent_cell['cell_id']}.\n"
             pass
+print("CELL IDENTIFICATION COMPLETE.")
+output.close()
 
 from pandasgui import show
 show(lib.to_dataframe())

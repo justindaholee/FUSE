@@ -137,3 +137,20 @@ class Library:
                 if recent_cell.frame == frame and recent_cell.cell_id == cell_id:
                     return lineage_id
         return -1
+    
+    # def make_assignment(self, current_frame, cell, scores):
+    #     if len(scores) > 0:
+            
+
+
+    #     if len(scores) == 1 and (
+    #         scores[0]['iou_score'] > 0.3) and (
+    #         scores[0]['visual_score'] > 0.95):
+    #         self.add_cell(Cell(
+    #             cell_id = scores[0]['next_cell_id'],
+    #             lineage_id = cell['lineage_id'],
+    #             frame = current_frame,
+    #             x = scores[0]['next_cell_x'],
+    #             y = scores[0]['next_cell_y'],
+    #         ))
+    #         print("Only one match")

@@ -7,10 +7,10 @@ from tqdm import tqdm
 from ast import literal_eval
 from PIL import Image, ImageOps
 from sklearn.model_selection import train_test_split
-from keras.callbacks import EarlyStopping
 from tensorflow import keras
+from keras.callbacks import EarlyStopping
 from Lineage_Library import Cell, Library
-from functions import read_multiframe_tiff, extract_cells, calculate_iou, cosine_similarity
+from functions import read_multiframe_tiff, extract_cells,calculate_iou, cosine_similarity
 output = open("output.txt","w")
 
 
@@ -155,9 +155,10 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
         else:
             # output.write(f"\nNO MATCH: No potential cells found for cell #{recent_cell['cell_id']}.\n"
             pass
-print("CELL IDENTIFICATION COMPLETE.")
 output.close()
+print("CELL IDENTIFICATION COMPLETE.")
 
-from pandasgui import show
-show(lib.to_dataframe())
+
+# from pandasgui import show
+# show(lib.to_dataframe())
         

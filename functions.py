@@ -62,7 +62,7 @@ def calculate_iou(cell1: int, frame1: np.ndarray, cell2: int, frame2: np.ndarray
         raise ValueError("Both cells must have non-zero IDs")
     return iou
 
-def extract_cells(image_path: str, mask_path: str, output_file: str, channel: str):
+def extract_cells(images_path: str, masks_path: str, output_file: str, channel: str):
     """
     Extracts individual cell images from a multi-frame image and mask file, and writes them to an HDF5 file.
 
@@ -75,8 +75,8 @@ def extract_cells(image_path: str, mask_path: str, output_file: str, channel: st
     Returns:
         None
     """
-    image_frames = read_multiframe_tiff(image_path)
-    mask_frames = read_multiframe_tiff(mask_path)
+    image_frames = read_multiframe_tiff(images_path)
+    mask_frames = read_multiframe_tiff(masks_path)
 
     with h5py.File(output_file, 'w') as hf:
         for frame_idx, (image_frame, mask_frame) in enumerate(zip(image_frames, mask_frames)):

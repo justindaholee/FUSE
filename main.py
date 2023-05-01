@@ -1,11 +1,16 @@
+import h5py
 import math
 import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from ast import literal_eval
+from PIL import Image, ImageOps
+from sklearn.model_selection import train_test_split
+from keras.callbacks import EarlyStopping
+from tensorflow import keras
 from Lineage_Library import Cell, Library
-from functions import read_multiframe_tiff, extract_cells, calculate_iou
+from functions import read_multiframe_tiff, extract_cells, calculate_iou, cosine_similarity
 
 
 # USER INPUTS #################################################################
@@ -25,58 +30,88 @@ channel = 'RFP'
 # Numerical value for max radius of which cells need for identificaiton across frames
 search_radius = 100
 
-###############################################################################
 
-### PART 1: Import data and Preprocessing
+### PART 1: Import data and Preprocessing######################################
 
 # TODO: Check that data exists in the correct format ###############
 
-# Import data
+# 1. Import data
 masks = read_multiframe_tiff(masks_path)
 info_df = pd.read_csv(info_path)
+dir_path, base_name = os.path.split(imgs_path)
 
-# Pre-processing
+# 2. Pre-processing informational data
 info_df = info_df[info_df['Channel'] == channel]
 df = info_df[['Frame', 'ROI']]
 df[['x', 'y']] = info_df['Centroid'].str.strip('()').str.split(', ', expand=True).astype(float)
 
-
-# Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
-dir_path, base_name = os.path.split(imgs_path)
+# 3. Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
 cells_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_cells.hdf5")
-# extract_cells(imgs_path, masks_path, cells_path, channel)
-del dir_path, base_name
-print(cells_path)
+extract_cells(imgs_path, masks_path, cells_path, channel)
+
+img_list = []
+with h5py.File(cells_path, 'r') as hf:
+    for key in hf.keys():
+        img_list.append(hf[key][()])
+
+x_train = np.array(img_list)
+x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+x_train, x_test = train_test_split(x_train, test_size=0.2, random_state=42)
+del img_list # delete img data to clear RAM
+
+early_stop = EarlyStopping(monitor='val_loss', patience=5)
+
+print(f"training dataset shape: {x_train.shape}")
+print(f"testing dataset shape: {x_test.shape}")
+
+# 4. Train autoencoder on the single cell images
+encoder = keras.models.Sequential([
+    keras.layers.Flatten(input_shape=[28, 28]),
+    keras.layers.Dense(100, activation="relu"),
+    keras.layers.Dense(30, activation="relu"),
+])
+decoder = keras.models.Sequential([
+    keras.layers.Dense(100, activation="relu", input_shape=[30]),
+    keras.layers.Dense(28 * 28, activation="sigmoid"),
+    keras.layers.Reshape([28, 28])
+])
+autoencoder = keras.models.Sequential([encoder, decoder])
+autoencoder.compile(loss="binary_crossentropy",
+                   optimizer='adam')
+history = autoencoder.fit(x_train, x_train, epochs=300,
+                                  validation_data=[x_test, x_test],
+                                  callbacks=[early_stop]) 
+model_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_model.h5")
+del x_train, x_test
 
 
-# TODO: train or import model.h5 
-breakpoint
-
-### PART 2: Frame-by-frame Pairwise Cell Labeling
+### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
 
 # Initialize library for tracking lineages
 lib = Library(masks[0], df)
 
 prev_mask = masks[0]
-# for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
-#                       desc="Processing Frames", unit="frame", ncols=80):
-for i, mask in enumerate(masks[1:]):
+for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
+                      desc="Processing Frames", unit="frame", ncols=80):
+# for i, mask in enumerate(masks[1:]):
     current_frame = i + 1;
     temp_df = df[df['Frame'] == current_frame]
 
     for recent_cell in lib.all_recent():
         prev_mask = masks[recent_cell['frame']]
-        
+        # TODO: get visual features using encoder
+        # recent_cell_img = hf[frame_0_cell_1][]
+        # recent_cell_vec = encoder.predict()
         scores = []
         for new_cell in np.unique(mask)[1:]:
             if new_cell != 0:
-                # only proceed if the x and y are within certain distance
                 x_new, y_new = temp_df[temp_df['ROI']==(new_cell-1)].iloc[0][['x', 'y']]
                 distance = math.sqrt((x_new - recent_cell['x'])**2 + (y_new - recent_cell['y'])**2)
+                
                 if distance < search_radius:
-                    # calculate IoU score
                     iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, new_cell, mask)
-                    if iou_score > 0: 
+                    
+                    if (iou_score > 0) and (lib.is_recent_cell(current_frame, new_cell-1) == -1):
                         scores.append({
                             'next_cell_id': new_cell,
                             'next_cell_x': x_new,
@@ -87,7 +122,7 @@ for i, mask in enumerate(masks[1:]):
                         })
         
         if (len(scores) == 1) and (scores[0]['iou_score'] > 0.3):
-            print(f"MATCH: Cell #{recent_cell['cell_id']} found in frame {current_frame}.")
+            # print(f"MATCH: Cell #{recent_cell['cell_id']} found in frame {current_frame}.")
             lib.add_cell(Cell(
                 cell_id = scores[0]['next_cell_id'],
                 lineage_id = recent_cell['lineage_id'],
@@ -96,11 +131,12 @@ for i, mask in enumerate(masks[1:]):
                 y = scores[0]['next_cell_y']
             ))
         elif (len(scores) > 1):
-            print(f"MATCH: Found {len(scores)} potential cells for cell #{recent_cell['cell_id']}.")
+            # print(f"MATCH: Found {len(scores)} potential cells for cell #{recent_cell['cell_id']}.")
             pass
         else:
-            print(f"NO MATCH: No potential cells found for cell #{recent_cell['cell_id']}.")
+            # print(f"NO MATCH: No potential cells found for cell #{recent_cell['cell_id']}."
             pass
 
- # before assigning a cell, call a function that checks to see if the desired cell has already been assigned       
+from pandasgui import show
+show(lib.to_dataframe())
         

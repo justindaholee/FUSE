@@ -120,3 +120,20 @@ class Library:
                 })
         return recent_cells
 
+    def is_recent_cell(self, frame: int, cell_id: int):
+        """
+        Checks if a cell is a recent cell based on the frame number and cell id.
+
+        Args:
+            frame: The frame number to check.
+            cell_id: The cell id to check.
+
+        Returns:
+            The lineage number the cell was found in if it is a recent cell; otherwise, -1.
+        """
+        for lineage_id, lineage in enumerate(self.lineages, start=1):
+            if len(lineage) > 0:
+                recent_cell = lineage[-1]
+                if recent_cell.frame == frame and recent_cell.cell_id == cell_id:
+                    return lineage_id
+        return -1

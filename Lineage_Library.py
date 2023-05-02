@@ -1,3 +1,24 @@
+'''
+Cell Lineage Library and Tracking Classes
+
+This script defines two classes, Cell and Library, that are used to create and manage a
+collection of cells and their respective lineages for tracking purposes. The Library class
+provides methods for adding cells, accessing recent cells, and converting the library to a
+DataFrame, among other operations. The Cell class represents individual cells and their
+attributes, such as cell ID, lineage ID, frame, and centroid coordinates.
+
+Dependencies:
+
+pandas
+numpy
+math
+collections
+Classes:
+
+Cell: Represents an individual cell with attributes and methods for cell information.
+Library: Manages a collection of cells and their respective lineages for tracking purposes.
+@author: Shani Zuniga
+'''
 import pandas as pd
 import math
 import numpy as np
@@ -145,7 +166,7 @@ class Library:
                     return lineage_id
         return -1
     
-    def find_best_match(self, current_frame: int, cell: Dict, scores: List[Dict], 
+    def identify_cells(self, current_frame: int, scores: List[Dict], 
                     iou_weights=0.6, visual_weights=0.4):
         """
         Find the best matching cell based on IoU and visual scores, and add it to the
@@ -178,7 +199,7 @@ class Library:
 
         self.add_cell(Cell(
                 cell_id = scores[best_match_index]['next_cell_id'],
-                lineage_id = cell['lineage_id'],
+                lineage_id = scores[best_match_index]['lineage_id'],
                 frame = current_frame,
                 x = scores[best_match_index]['next_cell_x'],
                 y = scores[best_match_index]['next_cell_y'],

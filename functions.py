@@ -1,3 +1,27 @@
+'''
+Cell Image Extraction and Comparison Utilities
+
+This script provides utility functions for extracting cell images from multi-frame images and masks,
+processing the cell images, and calculating metrics such as Intersection over Union (IoU) and cosine
+similarity between cell images. The extracted cell images are stored in an HDF5 file.
+
+Dependencies:
+
+os
+h5py
+numpy
+PIL
+Functions:
+
+read_multiframe_tiff(filename: str): Reads a multi-frame TIFF file and returns an ndarray of its frames.
+process_image(img_data, size=(28, 28)): Rescale, convert to grayscale, pad, and normalize an input image.
+extract_cells(images_path: str, masks_path: str, output_file: str, channel: str): Extracts individual cell images
+from a multi-frame image and mask file, and writes them to an HDF5 file.
+calculate_iou(cell1: int, frame1: np.ndarray, cell2: int, frame2: np.ndarray): Calculates the Intersection over Union
+(IoU) of two cells in two frames.
+cosine_similarity(vec1, vec2): Computes the cosine similarity between two vectors.
+@author: Shani Zuniga
+'''
 import os
 import h5py
 import numpy as np

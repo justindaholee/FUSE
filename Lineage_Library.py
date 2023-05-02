@@ -1,7 +1,8 @@
-from collections import deque
 import pandas as pd
 import math
 import numpy as np
+from typing import List, Dict
+from collections import deque
 
 class Cell:
     def __init__(self, cell_id: int, lineage_id: int, frame: int, x: float, y: float):
@@ -37,7 +38,7 @@ class Library:
         """
         self.lineages = []
 
-    def __init__(self, init_mask, df):
+    def __init__(self, init_mask: np.ndarray, df: pd.DataFrame):
         """
         Initializes a new Library object and populates it with Cell objects based on an initial mask and DataFrame.
 
@@ -58,7 +59,7 @@ class Library:
                 self.add_cell(new_cell)
         del cell, cell_info, x, y, new_cell
 
-    def add_cell(self, cell):
+    def add_cell(self, cell: Cell):
         """
         Adds a Cell object to the Library object.
 
@@ -72,7 +73,7 @@ class Library:
             self.lineages.extend(deque() for _ in range(cell.lineage_id - len(self.lineages)))
         self.lineages[cell.lineage_id-1].append(cell)
 
-    def recent(self, lineage_id):
+    def recent(self, lineage_id: int) -> Cell:
         """
         Returns the most recent Cell object from a specific lineage.
 
@@ -95,7 +96,13 @@ class Library:
         data = []
         for i, lineage in enumerate(self.lineages):
             for cell in lineage:
-                data.append({'cell_id': cell.cell_id, 'lineage_id': i+1, 'frame': cell.frame, 'x': cell.x, 'y': cell.y})
+                data.append({
+                    'cell_id': cell.cell_id,
+                    'lineage_id': i+1,
+                    'frame': cell.frame,
+                    'x': cell.x,
+                    'y': cell.y
+                })
         return pd.DataFrame(data)
     
     def all_recent(self):
@@ -120,7 +127,7 @@ class Library:
                 })
         return recent_cells
 
-    def is_recent_cell(self, frame: int, cell_id: int):
+    def is_recent_cell(self, frame: int, cell_id: int) -> int:
         """
         Checks if a cell is a recent cell based on the frame number and cell id.
 
@@ -138,19 +145,41 @@ class Library:
                     return lineage_id
         return -1
     
-    # def make_assignment(self, current_frame, cell, scores):
-    #     if len(scores) > 0:
-            
+    def find_best_match(self, current_frame: int, cell: Dict, scores: List[Dict], 
+                    iou_weights=0.6, visual_weights=0.4):
+        """
+        Find the best matching cell based on IoU and visual scores, and add it to the
+        Lineage Library.
 
+        Args:
+            current_frame (int): Frame number of potential matching cells.
+            cell (dict): Reference cell with its features.
+            scores (list of dict): Potential matching cells with their features and scores.
 
-    #     if len(scores) == 1 and (
-    #         scores[0]['iou_score'] > 0.3) and (
-    #         scores[0]['visual_score'] > 0.95):
-    #         self.add_cell(Cell(
-    #             cell_id = scores[0]['next_cell_id'],
-    #             lineage_id = cell['lineage_id'],
-    #             frame = current_frame,
-    #             x = scores[0]['next_cell_x'],
-    #             y = scores[0]['next_cell_y'],
-    #         ))
-    #         print("Only one match")
+        Returns:
+            None
+        """
+        if not scores:
+            return
+
+        normalized_scores = []
+
+        min_visual_score = min(score['visual_score'] for score in scores)
+        max_visual_score = max(score['visual_score'] for score in scores)
+
+        for score in scores:
+            iou_normalized = score['iou_score']
+            visual_normalized = (score['visual_score'] - min_visual_score) / (max_visual_score - min_visual_score) if max_visual_score != min_visual_score else 1
+
+            normalized_score = iou_weights * iou_normalized + visual_weights * visual_normalized
+            normalized_scores.append(normalized_score)
+
+        best_match_index = np.argmax(normalized_scores)
+
+        self.add_cell(Cell(
+                cell_id = scores[best_match_index]['next_cell_id'],
+                lineage_id = cell['lineage_id'],
+                frame = current_frame,
+                x = scores[best_match_index]['next_cell_x'],
+                y = scores[best_match_index]['next_cell_y'],
+        ))

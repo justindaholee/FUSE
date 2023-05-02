@@ -4,15 +4,11 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from ast import literal_eval
-from PIL import Image, ImageOps
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.callbacks import EarlyStopping
 from Lineage_Library import Cell, Library
 from functions import read_multiframe_tiff, extract_cells,calculate_iou, cosine_similarity
-output = open("output.txt","w")
-
 
 # USER INPUTS #################################################################
 
@@ -90,6 +86,8 @@ model_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_model.h5"
 del x_train, x_test
 
 print("PREPROCESSING COMPLETE.")
+
+
 ### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
 print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
 
@@ -138,27 +136,10 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                             'distance': distance
                         })
         
-        # TODO: convert decision sequence into a function
-        if (len(scores) == 1) and (scores[0]['iou_score'] > 0.3):
-            # output.write(f"\nMATCH: Cell #{recent_cell['cell_id']} found in frame {current_frame}.\n")
-            lib.add_cell(Cell(
-                cell_id = scores[0]['next_cell_id'],
-                lineage_id = recent_cell['lineage_id'],
-                frame = current_frame,
-                x = scores[0]['next_cell_x'],
-                y = scores[0]['next_cell_y'],
-            ))
-        elif (len(scores) > 1):
-            output.write(f"\nMATCH: Found {len(scores)} potential cells for lineage #{recent_cell['lineage_id']} in frame {current_frame}.\n")
-            for potential_cell in scores:
-                output.write(f"    Potential cell ID#{potential_cell['next_cell_id']}  Visual Score: {potential_cell['visual_score']}\n")
-        else:
-            # output.write(f"\nNO MATCH: No potential cells found for cell #{recent_cell['cell_id']}.\n"
-            pass
-output.close()
+        lib.find_best_match(current_frame, recent_cell, scores)
+
 print("CELL IDENTIFICATION COMPLETE.")
 
 
-# from pandasgui import show
-# show(lib.to_dataframe())
-        
+from pandasgui import show
+show(lib.to_dataframe())

@@ -44,9 +44,10 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.callbacks import EarlyStopping
+from scipy.spatial.distance import cdist
 
 from utils.lineage_management import Library
-from utils.img_processing import read_multiframe_tiff, extract_cells
+from utils.img_processing import read_multiframe_tiff, extract_cells_as_hdf5
 from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
 
 # USER INPUTS #################################################################
@@ -90,7 +91,7 @@ df[['x', 'y']] = centroids
 
 # 3. Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
 cells_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_cells.hdf5")
-extract_cells(imgs_path, masks_path, cells_path, channel)
+extract_cells_as_hdf5(imgs_path, masks_path, cells_path, channel)
 
 img_list = []
 with h5py.File(cells_path, 'r') as hf:
@@ -131,74 +132,71 @@ print("PREPROCESSING COMPLETE.")
 ### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
 print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
 
-# TODO: refactor cell processing to be similar to main_no_hdf5
-
 # Initialize library for tracking lineages
 lib = Library(masks[0], df)
 
 prev_mask = masks[0]
 for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
-                      desc="Processing Frames", unit="frame", ncols=80):
+                    desc="Processing Frames", unit="frame", ncols=80):
     current_frame = i + 1
     temp_df = df[df['Frame'] == current_frame]
 
     scores = []
     for recent_cell in lib.all_recent():
+        curr_mask = masks[current_frame]
         prev_mask = masks[recent_cell['frame']]
-
         with h5py.File(cells_path, 'r') as hf:
             key = (
                 'frame_' + str(recent_cell['frame']) + 
                 '_cell_' + str(recent_cell['cell_id'])
                 )
-            cell_img = np.array(hf[key])
-        cell_img = cell_img.reshape(1, 28, 28, 1)
+            cell_img = np.array(hf[key]).reshape(1, 28, 28, 1)
         recent_vec = encoder.predict(cell_img, verbose=0)
 
-        for new_cell in np.unique(mask)[1:]:
-            if (new_cell != 0) and (lib.is_recent_cell(current_frame, new_cell) == -1):
-                x_new, y_new = temp_df[temp_df['ROI']==(new_cell-1)].iloc[0][['x', 'y']]
-                distance = math.sqrt(
-                    (x_new - recent_cell['x'])**2 +
-                    (y_new - recent_cell['y'])**2
+        new_cells = np.unique(curr_mask)[1:]
+        new_cells = new_cells[new_cells != 0]
+
+        recent_cell_coords = np.array([recent_cell['x'], recent_cell['y']])
+        new_cell_coords = (
+            temp_df[temp_df['ROI'].isin(new_cells - 1)][['x', 'y']].to_numpy()
+            )
+        distances = cdist(recent_cell_coords.reshape(1, -1), new_cell_coords)[0]
+        new_cells = new_cells[distances < search_radius]
+
+        for new_cell in new_cells:
+            if lib.is_recent_cell(current_frame, new_cell) == -1:
+                x_new, y_new = (
+                    temp_df[temp_df['ROI'] == (new_cell - 1)].iloc[0][['x', 'y']]
                     )
                 
-                if distance < search_radius:
+                iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, 
+                                        new_cell, mask)
+
+                if iou_score > 0:
                     with h5py.File(cells_path, 'r') as hf:
                         key = 'frame_' + str(current_frame) + '_cell_' + str(new_cell)
-                        cell_img = np.array(hf[key])
-                    cell_img = cell_img.reshape(1, 28, 28, 1)
+                        cell_img = np.array(hf[key]).reshape(1, 28, 28, 1)
                     new_vec = encoder.predict(cell_img, verbose=0)
-                    
-                    iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, 
-                                              new_cell, mask)
-  
-                    if (iou_score > 0):
-                        with h5py.File(cells_path, 'r') as hf:
-                            key = (
-                                'frame_' + str(current_frame) +
-                                '_cell_' + str(new_cell)
-                                )
-                            cell_img = np.array(hf[key])
-                        cell_img = cell_img.reshape(1, 28, 28, 1)
-                        new_vec = encoder.predict(cell_img, verbose=0)
-                        
-                        visual_score = cosine_similarity(recent_vec, new_vec)
+                    visual_score = cosine_similarity(recent_vec, new_vec)
 
-                        scores.append({
-                            'next_cell_id': new_cell,
-                            'next_cell_x': x_new,
-                            'next_cell_y': y_new,
-                            'lineage_id': recent_cell['lineage_id'],
-                            'iou_score': iou_score,
-                            'visual_score': visual_score,
-                            'distance': distance
+                    distance = math.sqrt(
+                        (x_new - recent_cell['x'])**2 +
+                        (y_new - recent_cell['y'])**2
+                        )
+
+                    scores.append({
+                        'next_cell_id': new_cell,
+                        'next_cell_x': x_new,
+                        'next_cell_y': y_new,
+                        'lineage_id': recent_cell['lineage_id'],
+                        'iou_score': iou_score,
+                        'visual_score': visual_score,
+                        'distance': distance
                         })
 
     lib.identify_cells(current_frame, scores)
 
 print("CELL IDENTIFICATION COMPLETE.")
-
 
 # from pandasgui import show
 # show(lib.to_dataframe())

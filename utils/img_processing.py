@@ -2,32 +2,39 @@
 Cell Image Processing Utilities
 
 This script provides utility functions for extracting cell images from multi-frame
-images and masks, and processing the cell images. The extracted cell images are stored
-in an HDF5 file.
+images and masks, and processing the cell images.
 
 Dependencies:
 
-h5py
-numpy
-PIL
+    typing
+    h5py
+    numpy
+    PIL
 
 Functions:
 
-read_multiframe_tiff(filename: str): 
+read_multiframe_tiff(filename: str) -> np.ndarray: 
     Reads a multi-frame TIFF file and returns an ndarray of its frames.
-process_image(img_data, size=(28, 28)):
+process_image(img_data, size=(28, 28)) -> np.ndarray:
     Rescale, convert to grayscale, pad, and normalize an input image.
-extract_cells(images_path: str, masks_path: str, output_file: str, channel: str):
+extract_cells_as_hdf5(images_path: str, masks_path: str,
+                      output_file: str, channel: str) -> None:
     Extracts individual cell images from a multi-frame image and mask file, and writes
     them to an HDF5 file.
+extract_cells_as_dict(images_path: str, masks_path: str,
+                      channel: str) -> Dict[str, np.ndarray]:
+    Extracts individual cell images from a multi-frame image and mask file, and writes
+    them to a dictionary.
 
 @author: Shani Zuniga
 '''
+from typing import Dict
+
 import numpy as np
 import h5py
 from PIL import Image, ImageOps
 
-def read_multiframe_tiff(filename: str):
+def read_multiframe_tiff(filename: str) -> np.ndarray:
     """
     Reads a multi-frame TIFF file and returns an ndarray of its frames.
 
@@ -46,7 +53,7 @@ def read_multiframe_tiff(filename: str):
 
     return np.array(frames)
 
-def process_image(img_data, size=(28, 28)):
+def process_image(img_data, size=(28, 28)) -> np.ndarray:
     """
     Rescale, convert to grayscale, pad, and normalize an input image.
 
@@ -55,7 +62,7 @@ def process_image(img_data, size=(28, 28)):
         size (tuple, optional): Desired output size (width, height). Default: (28, 28).
 
     Returns:
-        numpy.array: Processed and rescaled image with pixel values in range [0, 1].
+        np.ndarray of processed and rescaled image with pixel values in range [0, 1].
     """
     # Normalize the image to the range [0, 1]
     min_val, max_val = np.min(img_data), np.max(img_data)
@@ -72,10 +79,12 @@ def process_image(img_data, size=(28, 28)):
     del min_val, max_val, normalized_image, img
     return img_array
 
-def extract_cells(images_path: str, masks_path: str, output_file: str, channel: str):
+def extract_cells_as_hdf5(images_path: str, masks_path: str, 
+                          output_file: str, channel: str) -> None:
     """
     Extracts individual cell images from a multi-frame image and mask file, and writes
-    them to an HDF5 file.
+    them to an HDF5 file that can be accessed with keys like: "frame_{frame_idx}_
+    cell_{cell_id}".
 
     Args:
         image_path: The path to the multi-frame image file.
@@ -113,3 +122,44 @@ def extract_cells(images_path: str, masks_path: str, output_file: str, channel: 
                     name=f"frame_{frame_idx}_cell_{cell_id}",
                     data=processed_img
                     )
+
+def extract_cells_as_dict(images_path: str, masks_path: str,
+                          channel: str) -> Dict[str, np.ndarray]:
+    """
+    Extracts individual cell images from a multi-frame image and mask file, and writes
+    them to a dictionary.
+
+    Args:
+        images_path (str): The path to the multi-frame image file.
+        masks_path (str): The path to the multi-frame mask file.
+        channel (str): The index of channel to extract (if image is multichannel).
+
+    Returns:
+        dict: A dictionary containing processed cell images with keys in the format
+        "frame_{frame_idx}_cell_{cell_id}".
+    """
+    image_frames = read_multiframe_tiff(images_path)
+    mask_frames = read_multiframe_tiff(masks_path)
+
+    cell_dict = {}
+    for frame_idx, (image_frame, mask_frame) in enumerate(zip(image_frames, 
+                                                                mask_frames)):
+        if image_frame.ndim > 2:
+            image_frame = image_frame[..., channel]
+
+        cell_ids = set(mask_frame.flatten())
+        if 0 in cell_ids:
+            cell_ids.remove(0)
+
+        for cell_id in cell_ids:
+            cell_coords = (mask_frame == cell_id).nonzero()
+            x_min, x_max = min(cell_coords[0]), max(cell_coords[0])
+            y_min, y_max = min(cell_coords[1]), max(cell_coords[1])
+
+            cell_mask = (mask_frame == cell_id)
+            clipped_image = image_frame * cell_mask
+            cell_image = clipped_image[x_min:x_max+1, y_min:y_max+1]
+            processed_img = process_image(cell_image)
+
+            cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img
+    return cell_dict

@@ -18,8 +18,9 @@ Classes:
 
 @author: Shani Zuniga
 '''
-from typing import List, Dict
+from typing import List, Dict, Union
 from collections import deque
+
 import pandas as pd
 import numpy as np
 
@@ -73,7 +74,7 @@ class Library:
                 self.add_cell(new_cell)
         del cell, cell_info, x, y, new_cell
 
-    def add_cell(self, cell: Cell):
+    def add_cell(self, cell: Cell) -> None:
         """
         Adds a Cell object to the Library object.
 
@@ -101,7 +102,7 @@ class Library:
         if lineage_id <= len(self.lineages):
             return self.lineages[lineage_id-1][-1]
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Converts the Library object to a pandas DataFrame.
 
@@ -121,7 +122,7 @@ class Library:
                     })
         return pd.DataFrame(data)
     
-    def all_recent(self):
+    def all_recent(self) -> List[Dict[str, Union[int, float]]]:
         """
         Returns a list of dictionaries representing the most recent Cell object
         in each lineage.
@@ -164,7 +165,7 @@ class Library:
         return -1
     
     def identify_cells(self, current_frame: int, scores: List[Dict], 
-                    iou_weights=0.6, visual_weights=0.4):
+                    iou_weights=0.6, visual_weights=0.4) -> None:
         """
         Find the best matching cell based on IoU and visual scores, and add it to the
         Lineage Library.

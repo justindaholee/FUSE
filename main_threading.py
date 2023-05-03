@@ -14,7 +14,6 @@ Inputs:
     Maximum search radius for cell identification across frames
 
 Outputs:
-    Extracted single cell images stored in an HDF5 file
     Trained autoencoder model saved as an .h5 file
     Lineage tracking information printed to the console
 
@@ -22,7 +21,6 @@ Dependencies:
     os
     math
     concurrent
-    h5py
     numpy
     pandas
     tqdm
@@ -40,7 +38,6 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Union
 
-import h5py
 import numpy as np
 import pandas as pd
 
@@ -51,7 +48,7 @@ from keras.callbacks import EarlyStopping
 from scipy.spatial.distance import cdist
 
 from utils.lineage_management import Library
-from utils.img_processing import read_multiframe_tiff, extract_cells
+from utils.img_processing import read_multiframe_tiff, extract_cells_as_dict
 from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
 
 # TODO: fix encoder and ThreadPoolExecutor combo issue
@@ -59,7 +56,7 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
                   current_frame: int,
                   temp_df: pd.DataFrame,
                   masks: Dict[int, np.ndarray],
-                  img_dict: Dict[str, np.ndarray],
+                  cell_imgs: Dict[str, np.ndarray],
                   search_radius: float,
                   encoder: keras.Sequential
                   ) -> List[Dict[str, Union[int, float]]]:
@@ -73,7 +70,7 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
         current_frame (int): The current frame number.
         temp_df (pd.DataFrame): DataFrame containing cell details (x, y, ROI).
         masks (Dict[int, np.ndarray]): Dictionary containing masks for each frame.
-        img_dict (Dict[str, np.ndarray]): Dictionary containing cell images.
+        cell_imgs (Dict[str, np.ndarray]): Dictionary containing cell images.
         search_radius (float): The search radius for finding matching cells.
         encoder (keras.Sequential): Trained Keras model to encode cell images.
 
@@ -86,7 +83,7 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
     prev_mask = masks[recent_cell['frame']]
 
     key = f'frame_{recent_cell["frame"]}_cell_{recent_cell["cell_id"]}'
-    cell_img = img_dict[key].reshape(1, 28, 28, 1)
+    cell_img = cell_imgs[key].reshape(1, 28, 28, 1)
     recent_vec = encoder.predict(cell_img, verbose=0)
 
     new_cells = np.unique(mask)[1:]
@@ -106,7 +103,7 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
 
             if iou_score > 0:
                 key = f'frame_{current_frame}_cell_{new_cell}'
-                cell_img = img_dict[key].reshape(1, 28, 28, 1)
+                cell_img = cell_imgs[key].reshape(1, 28, 28, 1)
                 new_vec = encoder.predict(cell_img, verbose=0)
                 visual_score = cosine_similarity(recent_vec, new_vec)
 
@@ -166,15 +163,9 @@ centroids = (
 df[['x', 'y']] = centroids
 
 # 3. Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
-cells_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_cells.hdf5")
-extract_cells(imgs_path, masks_path, cells_path, channel)
+cell_imgs = extract_cells_as_dict(imgs_path, masks_path, channel)
 
-img_dict = {}
-with h5py.File(cells_path, 'r') as hf:
-    for key in hf.keys():
-        img_dict[key] = hf[key][()]
-
-x_train = np.array(list(img_dict.values()))
+x_train = np.array(list(cell_imgs.values()))
 x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
 x_train, x_test = train_test_split(x_train, test_size=0.2, random_state=42)
 
@@ -223,7 +214,7 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                 current_frame,
                 temp_df,
                 masks,
-                img_dict,
+                cell_imgs,
                 search_radius,
                 encoder
                 ),

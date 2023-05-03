@@ -19,18 +19,17 @@ Outputs:
     Lineage tracking information printed to the console
 
 Dependencies:
-h5py
-math
-os
-numpy
-pandas
-tqdm
-sklearn
-tensorflow
-keras
-Lineage_Library
-img_processing
-cell_similarity_matrics
+    os
+    math
+    h5py
+    numpy
+    pandas
+    tqdm
+    sklearn
+    tensorflow
+    lineage_managment
+    img_processing
+    cell_similarity_metrics
 
 @author: Shani Zuniga
 '''
@@ -46,7 +45,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.callbacks import EarlyStopping
 
-from Lineage_Library import Library
+from lineage_management import Library
 from img_processing import read_multiframe_tiff, extract_cells
 from cell_similarity_metrics import calculate_iou, cosine_similarity
 
@@ -122,11 +121,8 @@ decoder = keras.models.Sequential([
 autoencoder = keras.models.Sequential([encoder, decoder])
 autoencoder.compile(loss="binary_crossentropy",
                    optimizer='adam')
-history = autoencoder.fit(x_train, x_train, epochs=300,
-                                  validation_data=[x_test, x_test],
-                                  callbacks=[early_stop],
-                                  verbose=0) 
-model_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_model.h5")
+autoencoder.fit(x_train, x_train, epochs=300, validation_data=[x_test, x_test],
+                callbacks=[early_stop], verbose=0) 
 del x_train, x_test
 
 print("PREPROCESSING COMPLETE.")
@@ -154,7 +150,7 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                 '_cell_' + str(recent_cell['cell_id'])
                 )
             cell_img = np.array(hf[key])
-            cell_img = cell_img.reshape(1, 28, 28, 1)
+        cell_img = cell_img.reshape(1, 28, 28, 1)
         recent_vec = encoder.predict(cell_img, verbose=0)
 
         for new_cell in np.unique(mask)[1:]:
@@ -169,7 +165,7 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                     with h5py.File(cells_path, 'r') as hf:
                         key = 'frame_' + str(current_frame) + '_cell_' + str(new_cell)
                         cell_img = np.array(hf[key])
-                        cell_img = cell_img.reshape(1, 28, 28, 1)
+                    cell_img = cell_img.reshape(1, 28, 28, 1)
                     new_vec = encoder.predict(cell_img, verbose=0)
                     
                     iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, 
@@ -182,8 +178,8 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                                 '_cell_' + str(new_cell)
                                 )
                             cell_img = np.array(hf[key])
-                            cell_img = cell_img.reshape(1, 28, 28, 1)
-                            new_vec = encoder.predict(cell_img, verbose=0)
+                        cell_img = cell_img.reshape(1, 28, 28, 1)
+                        new_vec = encoder.predict(cell_img, verbose=0)
                         
                         visual_score = cosine_similarity(recent_vec, new_vec)
 

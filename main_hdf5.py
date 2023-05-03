@@ -132,6 +132,7 @@ print("PREPROCESSING COMPLETE.")
 print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
 
 # TODO: refactor cell processing to be similar to main_no_hdf5
+
 # Initialize library for tracking lineages
 lib = Library(masks[0], df)
 

@@ -93,6 +93,7 @@ df[['x', 'y']] = centroids
 # 3. Extract cells and generate cell img database. (img name e.g., 'frame_0_cell_1')
 cells_path = os.path.join(dir_path, os.path.splitext(base_name)[0] + "_cells.hdf5")
 extract_cells(imgs_path, masks_path, cells_path, channel)
+
 # TODO: remove hdf5 intermediate file entirely
 
 img_dict = {}
@@ -132,7 +133,6 @@ print("PREPROCESSING COMPLETE.")
 
 ### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
 print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
-# TODO; refacto cell processing sequence to be similar to dev branch
 
 # Initialize library for tracking lineages
 lib = Library(masks[0], df)

@@ -181,29 +181,24 @@ class Library:
         if not scores:
             return
 
-        normalized_scores = []
+        visual_scores = np.array([score['visual_score'] for score in scores])
+        min_vis_score = np.min(visual_scores)
+        max_vis_score = np.max(visual_scores)
+        vis_score_range = max_vis_score - min_vis_score
 
-        min_vis_score = min(score['visual_score'] for score in scores)
-        max_vis_score = max(score['visual_score'] for score in scores)
-        vis_score_range = max_vis_score != min_vis_score
+        if vis_score_range != 0:
+            visual_scores = (visual_scores - min_vis_score) / vis_score_range
+        else:
+            visual_scores = np.ones_like(visual_scores)
 
-        for score in scores:
-            iou_normalized = score['iou_score']
-            if (max_vis_score != min_vis_score):
-                vis_normalized = (score['visual_score'] - min_vis_score)
-                vis_normalized = vis_normalized / vis_score_range
-            else:
-                vis_normalized = 1
+        normalized_scores = (
+            iou_weights * np.array([score['iou_score'] for score in scores]) +
+            visual_weights * visual_scores
+        )
 
-            normalized_score = (
-                iou_weights * iou_normalized + 
-                visual_weights * vis_normalized
-                )
-            normalized_scores.append(normalized_score)
-
-        while normalized_scores:
+        while scores:
             match_index = np.argmax(normalized_scores)
-
+            
             matched_cell = Cell(
                 cell_id = scores[match_index]['next_cell_id'],
                 lineage_id = scores[match_index]['lineage_id'],
@@ -213,11 +208,10 @@ class Library:
                 )
             self.add_cell(matched_cell)
 
-            match_cell_id = scores[match_index]['next_cell_id']
-            
-            filtered_scores = [i for i in scores if i['next_cell_id'] != match_cell_id]
-            normalized_scores = [
-                element for i, element in enumerate(normalized_scores)
-                if i < len(scores) and scores[i]['next_cell_id'] != match_cell_id
-            ]
-            scores = filtered_scores
+            matched_cell_id = scores[match_index]['next_cell_id']
+
+            cell_id_indices = [i for i, score in enumerate(scores)
+                               if score['next_cell_id'] == matched_cell_id]
+            scores = [score for score in scores 
+                      if score['next_cell_id'] != matched_cell_id]
+            normalized_scores = np.delete(normalized_scores, cell_id_indices)

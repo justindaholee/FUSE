@@ -18,10 +18,10 @@ Cell: Represents an individual cell with attributes and methods for cell informa
 Library: Manages a collection of cells and their respective lineages for ID purposes.
 @author: Shani Zuniga
 '''
-import pandas as pd
-import numpy as np
 from typing import List, Dict
 from collections import deque
+import pandas as pd
+import numpy as np
 
 class Cell:
     def __init__(self, cell_id: int, lineage_id: int, frame: int, x: float, y: float):
@@ -184,29 +184,40 @@ class Library:
         normalized_scores = []
 
         min_vis_score = min(score['visual_score'] for score in scores)
-        max_visual_score = max(score['visual_score'] for score in scores)
-        vis_score_range = max_visual_score != min_vis_score
+        max_vis_score = max(score['visual_score'] for score in scores)
+        vis_score_range = max_vis_score != min_vis_score
 
         for score in scores:
             iou_normalized = score['iou_score']
-            if (max_visual_score != min_vis_score):
-                visual_normalized = (score['visual_score'] - min_vis_score)
-                visual_normalized = visual_normalized / vis_score_range
+            if (max_vis_score != min_vis_score):
+                vis_normalized = (score['visual_score'] - min_vis_score)
+                vis_normalized = vis_normalized / vis_score_range
             else:
-                visual_normalized = 1
+                vis_normalized = 1
 
             normalized_score = (
                 iou_weights * iou_normalized + 
-                visual_weights * visual_normalized
+                visual_weights * vis_normalized
                 )
             normalized_scores.append(normalized_score)
 
-        best_match_index = np.argmax(normalized_scores)
+        while normalized_scores:
+            match_index = np.argmax(normalized_scores)
 
-        self.add_cell(Cell(
-                cell_id = scores[best_match_index]['next_cell_id'],
-                lineage_id = scores[best_match_index]['lineage_id'],
+            matched_cell = Cell(
+                cell_id = scores[match_index]['next_cell_id'],
+                lineage_id = scores[match_index]['lineage_id'],
                 frame = current_frame,
-                x = scores[best_match_index]['next_cell_x'],
-                y = scores[best_match_index]['next_cell_y']
-                ))
+                x = scores[match_index]['next_cell_x'],
+                y = scores[match_index]['next_cell_y']
+                )
+            self.add_cell(matched_cell)
+
+            match_cell_id = scores[match_index]['next_cell_id']
+            
+            filtered_scores = [i for i in scores if i['next_cell_id'] != match_cell_id]
+            normalized_scores = [
+                element for i, element in enumerate(normalized_scores)
+                if i < len(scores) and scores[i]['next_cell_id'] != match_cell_id
+            ]
+            scores = filtered_scores

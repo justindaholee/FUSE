@@ -23,8 +23,8 @@ extract_cells(images_path: str, masks_path: str, output_file: str, channel: str)
 
 @author: Shani Zuniga
 '''
-import h5py
 import numpy as np
+import h5py
 from PIL import Image, ImageOps
 
 def read_multiframe_tiff(filename: str):

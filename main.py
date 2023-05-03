@@ -34,15 +34,18 @@ cell_similarity_matrics
 
 @author: Shani Zuniga
 '''
-import h5py
-import math
 import os
+import math
+
+import h5py
 import numpy as np
 import pandas as pd
+
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.callbacks import EarlyStopping
+
 from Lineage_Library import Library
 from img_processing import read_multiframe_tiff, extract_cells
 from cell_similarity_metrics import calculate_iou, cosine_similarity
@@ -183,7 +186,6 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                             new_vec = encoder.predict(cell_img, verbose=0)
                         
                         visual_score = cosine_similarity(recent_vec, new_vec)
-
 
                         scores.append({
                             'next_cell_id': new_cell,

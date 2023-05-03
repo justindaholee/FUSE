@@ -196,8 +196,9 @@ class Library:
                 visual_normalized = 1
 
             normalized_score = (
-                iou_weights * iou_normalized + visual_weights * visual_normalized
-)
+                iou_weights * iou_normalized + 
+                visual_weights * visual_normalized
+                )
             normalized_scores.append(normalized_score)
 
         best_match_index = np.argmax(normalized_scores)

@@ -1,26 +1,24 @@
 '''
 Cell Lineage Library and Tracking Classes
 
-This script defines two classes, Cell and Library, that are used to create and manage a
-collection of cells and their respective lineages for tracking purposes. The Library class
-provides methods for adding cells, accessing recent cells, and converting the library to a
-DataFrame, among other operations. The Cell class represents individual cells and their
-attributes, such as cell ID, lineage ID, frame, and centroid coordinates.
+This script defines two classes, Cell and Library, that are used to create and manage
+a collection of cells and their respective lineages for tracking purposes. The Library
+class provides methods for adding cells, accessing recent cells, and converting the
+library to a DataFrame, among other operations. The Cell class represents individual
+cells and their attributes: cell ID, lineage ID, frame, and centroid coordinates.
 
 Dependencies:
 
 pandas
 numpy
-math
 collections
 Classes:
 
 Cell: Represents an individual cell with attributes and methods for cell information.
-Library: Manages a collection of cells and their respective lineages for tracking purposes.
+Library: Manages a collection of cells and their respective lineages for ID purposes.
 @author: Shani Zuniga
 '''
 import pandas as pd
-import math
 import numpy as np
 from typing import List, Dict
 from collections import deque
@@ -47,21 +45,16 @@ class Cell:
         self.y = y
     
     def __repr__(self):
-        return f'Cell {self.cell_id} from Lineage {self.lineage_id} at Frame {self.frame} with centroid ({self.x}, {self.y})'
+        return (
+            f'Cell {self.cell_id} from Lineage {self.lineage_id}',
+            f'at Frame {self.frame} with centroid ({self.x}, {self.y})'
+            )
 
 class Library:
-    def __init__(self):
-        """
-        Initializes a new Library object.
-
-        Returns:
-            None
-        """
-        self.lineages = []
-
     def __init__(self, init_mask: np.ndarray, df: pd.DataFrame):
         """
-        Initializes a new Library object and populates it with Cell objects based on an initial mask and DataFrame.
+        Initializes a new Library object and populates it with Cell objects based on an 
+        initial mask and DataFrame.
 
         Args:
             init_mask: A numpy ndarray representing the initial cell mask.
@@ -91,7 +84,8 @@ class Library:
             None
         """
         if cell.lineage_id > len(self.lineages):
-            self.lineages.extend(deque() for _ in range(cell.lineage_id - len(self.lineages)))
+            self.lineages.extend(
+                deque() for _ in range(cell.lineage_id - len(self.lineages)))
         self.lineages[cell.lineage_id-1].append(cell)
 
     def recent(self, lineage_id: int) -> Cell:
@@ -106,13 +100,14 @@ class Library:
         """
         if lineage_id <= len(self.lineages):
             return self.lineages[lineage_id-1][-1]
-    
+
     def to_dataframe(self):
         """
         Converts the Library object to a pandas DataFrame.
 
         Returns:
-            A pandas DataFrame containing information about each Cell object in the Library.
+            A pandas DataFrame containing information about each Cell object
+            in the Library.
         """
         data = []
         for i, lineage in enumerate(self.lineages):
@@ -123,17 +118,19 @@ class Library:
                     'frame': cell.frame,
                     'x': cell.x,
                     'y': cell.y
-                })
+                    })
         return pd.DataFrame(data)
     
     def all_recent(self):
         """
-        Returns a list of dictionaries representing the most recent Cell object in each lineage.
+        Returns a list of dictionaries representing the most recent Cell object
+        in each lineage.
 
         Returns:
-            A list of dictionaries, where each dictionary represents the most recent Cell object in a lineage.
-            Each dictionary has the following keys: 'cell_id', 'lineage_id', 'frame', 'x', 'y',
-            with corresponding values for each attribute of the Cell object.
+            A list of dictionaries, where each dictionary represents the most recent
+            Cell object in a lineage. Each dictionary has the following keys:
+            'cell_id', 'lineage_id', 'frame', 'x', 'y', with corresponding values for
+            each attribute of the Cell object.
         """
         recent_cells = []
         for i, lineage in enumerate(self.lineages):
@@ -145,7 +142,7 @@ class Library:
                     'frame': cell.frame,
                     'x': cell.x,
                     'y': cell.y
-                })
+                    })
         return recent_cells
 
     def is_recent_cell(self, frame: int, cell_id: int) -> int:
@@ -157,7 +154,7 @@ class Library:
             cell_id: The cell id to check.
 
         Returns:
-            The lineage number the cell was found in if it is a recent cell; otherwise, -1.
+            The lineage number the cell was found in if it is a recent cell; else, -1.
         """
         for lineage_id, lineage in enumerate(self.lineages, start=1):
             if len(lineage) > 0:
@@ -175,7 +172,8 @@ class Library:
         Args:
             current_frame (int): Frame number of potential matching cells.
             cell (dict): Reference cell with its features.
-            scores (list of dict): Potential matching cells with their features and scores.
+            scores (list of dict): Potential matching cells with their
+                features and scores.
 
         Returns:
             None
@@ -185,14 +183,21 @@ class Library:
 
         normalized_scores = []
 
-        min_visual_score = min(score['visual_score'] for score in scores)
+        min_vis_score = min(score['visual_score'] for score in scores)
         max_visual_score = max(score['visual_score'] for score in scores)
+        vis_score_range = max_visual_score != min_vis_score
 
         for score in scores:
             iou_normalized = score['iou_score']
-            visual_normalized = (score['visual_score'] - min_visual_score) / (max_visual_score - min_visual_score) if max_visual_score != min_visual_score else 1
+            if (max_visual_score != min_vis_score):
+                visual_normalized = (score['visual_score'] - min_vis_score)
+                visual_normalized = visual_normalized / vis_score_range
+            else:
+                visual_normalized = 1
 
-            normalized_score = iou_weights * iou_normalized + visual_weights * visual_normalized
+            normalized_score = (
+                iou_weights * iou_normalized + visual_weights * visual_normalized
+)
             normalized_scores.append(normalized_score)
 
         best_match_index = np.argmax(normalized_scores)
@@ -202,5 +207,5 @@ class Library:
                 lineage_id = scores[best_match_index]['lineage_id'],
                 frame = current_frame,
                 x = scores[best_match_index]['next_cell_x'],
-                y = scores[best_match_index]['next_cell_y'],
-        ))
+                y = scores[best_match_index]['next_cell_y']
+                ))

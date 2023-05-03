@@ -45,9 +45,9 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.callbacks import EarlyStopping
 
-from lineage_management import Library
-from img_processing import read_multiframe_tiff, extract_cells
-from cell_similarity_metrics import calculate_iou, cosine_similarity
+from utils.lineage_management import Library
+from utils.img_processing import read_multiframe_tiff, extract_cells
+from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
 
 # USER INPUTS #################################################################
 

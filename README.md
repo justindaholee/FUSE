@@ -1,6 +1,6 @@
 <h1>
   <img src=".\logo\fluora_nobg.png" alt="Your Alt Text" height="25">
-  <b>FLUORA</b>: Live Cell Image Analysis for Fluorscent Cells
+  <b>FLUORA</b>: Live Cell Image Analysis for Fluorescent Cells
 </h1>
 
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data

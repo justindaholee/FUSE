@@ -4,7 +4,7 @@
 </h1>
 
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 ### *Keywords*: 
 in vitro analysis algorithm, transparent data handling, high-throughput, unbiased, user-friendly, visual phenotyping

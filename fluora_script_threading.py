@@ -58,7 +58,8 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
                   masks: Dict[int, np.ndarray],
                   cell_imgs: Dict[str, np.ndarray],
                   search_radius: float,
-                  encoder: keras.Sequential
+                  encoder: keras.Sequential,
+                  encoder_weights: List[np.ndarray]
                   ) -> List[Dict[str, Union[int, float]]]:
     """
     Process cells to find matching cells based on a search radius, image features,
@@ -72,7 +73,8 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
         masks (Dict[int, np.ndarray]): Dictionary containing masks for each frame.
         cell_imgs (Dict[str, np.ndarray]): Dictionary containing cell images.
         search_radius (float): The search radius for finding matching cells.
-        encoder (keras.Sequential): Trained Keras model to encode cell images.
+        encoder (keras.Sequential): The trained keras model that encodes cell images.
+        encoder_weights (List[np.ndarray]): Keras model weights that encode cell images.
 
     Returns:
         List[Dict[str, Union[int, float]]]: List of dictionaries containing
@@ -82,9 +84,11 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
     mask = masks[current_frame]
     prev_mask = masks[recent_cell['frame']]
 
+    thread_encoder = keras.models.clone_model(encoder)
+    thread_encoder.set_weights(encoder_weights)
     key = f'frame_{recent_cell["frame"]}_cell_{recent_cell["cell_id"]}'
     cell_img = cell_imgs[key].reshape(1, 28, 28, 1)
-    recent_vec = encoder.predict(cell_img, verbose=0)
+    recent_vec = thread_encoder.predict(cell_img, verbose=0)
 
     new_cells = np.unique(mask)[1:]
     new_cells = new_cells[new_cells != 0]
@@ -104,7 +108,7 @@ def process_cells(recent_cell: Dict[str, Union[int, float]],
             if iou_score > 0:
                 key = f'frame_{current_frame}_cell_{new_cell}'
                 cell_img = cell_imgs[key].reshape(1, 28, 28, 1)
-                new_vec = encoder.predict(cell_img, verbose=0)
+                new_vec = thread_encoder.predict(cell_img, verbose=0)
                 visual_score = cosine_similarity(recent_vec, new_vec)
 
                 distance = math.sqrt(
@@ -152,8 +156,8 @@ info_df = pd.read_csv(info_path)
 dir_path, base_name = os.path.split(imgs_path)
 
 # 2. Pre-processing informational data (channel, centroid extraction)
-info_df = info_df[info_df['Channel'] == channel]
 df = info_df[['Frame', 'ROI']].copy()
+df = df[info_df['Channel'] == channel]
 centroids = (
     info_df['Centroid']
     .str.strip('()')
@@ -190,6 +194,7 @@ autoencoder.compile(loss="binary_crossentropy",
                 optimizer='adam')
 autoencoder.fit(x_train, x_train, epochs=300, validation_data=[x_test, x_test],
                 callbacks=[early_stop], verbose=0) 
+encoder_weights = encoder.get_weights()
 del x_train, x_test
 
 print("PREPROCESSING COMPLETE.")
@@ -216,7 +221,8 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                 masks,
                 cell_imgs,
                 search_radius,
-                encoder
+                encoder,
+                encoder_weights
                 ),
             lib.all_recent(),
             )

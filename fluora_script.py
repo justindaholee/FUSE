@@ -32,7 +32,6 @@ Dependencies:
 
 @author: Shani Zuniga
 '''
-import os
 import math
 
 import numpy as np
@@ -74,11 +73,10 @@ print("IMPORTING DATA AND PREPROCESSING...")
 # 1. Import data
 masks = read_multiframe_tiff(masks_path)
 info_df = pd.read_csv(info_path)
-dir_path, base_name = os.path.split(imgs_path)
 
 # 2. Pre-processing informational data (channel, centroid extraction)
-info_df = info_df[info_df['Channel'] == channel]
 df = info_df[['Frame', 'ROI']].copy()
+df = df[info_df['Channel'] == channel]
 centroids = (
     info_df['Centroid']
     .str.strip('()')
@@ -95,9 +93,6 @@ x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
 x_train, x_test = train_test_split(x_train, test_size=0.2, random_state=42)
 
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-
-print(f"training dataset shape: {x_train.shape}")
-print(f"testing dataset shape: {x_test.shape}")
 
 # 4. Train autoencoder on the single cell images
 encoder = keras.models.Sequential([
@@ -179,10 +174,20 @@ for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1, leave=False,
                         'visual_score': visual_score,
                         'distance': distance
                         })
-
     lib.identify_cells(current_frame, scores)
+lib.remove_short_lineages(10, len(masks))
 
 print("CELL IDENTIFICATION COMPLETE.")
 
+# TODO: add preview component
+# TODO: add part 3 to file header comment
+### PART 3: Preview and Export Results#########################################
+
+results = lib.to_dataframe()
+results = results.rename(columns={'cell_id':'ROI', 'lineage_id':'Label'})
+results['ROI'] -= 1
+
+final_df = info_df.merge(results, on=['ROI', 'Frame'], how='left')
+
 # from pandasgui import show
-# show(lib.to_dataframe())
+# show(final_df)

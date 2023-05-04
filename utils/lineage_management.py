@@ -89,19 +89,6 @@ class Library:
                 deque() for _ in range(cell.lineage_id - len(self.lineages)))
         self.lineages[cell.lineage_id-1].append(cell)
 
-    def recent(self, lineage_id: int) -> Cell:
-        """
-        Returns the most recent Cell object from a specific lineage.
-
-        Args:
-            lineage_id: The ID of the lineage to retrieve.
-
-        Returns:
-            The most recent Cell object from the specified lineage.
-        """
-        if lineage_id <= len(self.lineages):
-            return self.lineages[lineage_id-1][-1]
-
     def to_dataframe(self) -> pd.DataFrame:
         """
         Converts the Library object to a pandas DataFrame.

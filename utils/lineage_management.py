@@ -116,7 +116,7 @@ class Library:
                 data.append({
                     'cell_id': cell.cell_id,
                     'lineage_id': i+1,
-                    'frame': cell.frame,
+                    'Frame': cell.frame,
                     'x': cell.x,
                     'y': cell.y
                     })
@@ -216,3 +216,25 @@ class Library:
             scores = [score for score in scores 
                       if score['next_cell_id'] != matched_cell_id]
             normalized_scores = np.delete(normalized_scores, cell_id_indices)
+    
+    def remove_short_lineages(self, min_percent: float, total_frames: int) -> None:
+            """
+            Remove lineages that have been tracked for fewer frames than 
+            min_percent/100*total_frames.
+
+            Parameters:
+            
+                min_percent: float
+                    Minimum percentage of total frames that a lineage must 
+                    be tracked for in order to be kept.
+                total_frames: int
+                    Total number of frames in the video.
+
+            Returns:
+
+                None
+            """
+            min_frames = min_percent / 100 * total_frames
+            self.lineages = [
+                lineage for lineage in self.lineages if len(lineage) >= min_frames
+                ]

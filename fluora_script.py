@@ -50,7 +50,7 @@ from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
 # USER INPUTS #################################################################
 
 # Path for original cell images as .tif file
-imgs_path = 'test_data\RFP_GFP_MIDDLE5\RFP_GFP_MIDDLE5.tif'
+imgs_path = "test_data\RFP_GFP_MIDDLE5\RFP_GFP_MIDDLE5.tif"
 
 # Path for cell masks ouput by Cellpose as .tif file
 masks_path = "test_data\RFP_GFP_MIDDLE5\seg_RFP_GFP_MIDDLE5.tif"
@@ -59,7 +59,7 @@ masks_path = "test_data\RFP_GFP_MIDDLE5\seg_RFP_GFP_MIDDLE5.tif"
 info_path = "test_data\RFP_GFP_MIDDLE5\EXP_MIDDLE5_1.csv"
 
 # Channel name to use visual feature extraction on, as a string
-channel = 'RFP'
+channel = "RFP"
 
 # Numerical value for max distance of which cells need for consideration
 search_radius = 100

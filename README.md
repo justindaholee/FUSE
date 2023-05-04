@@ -6,12 +6,12 @@
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-<p float="left">
-  <img src="https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png" width="100" />
-  <img src="./logo/fluora_with_text.png" width="500" /> 
-</p>
-
 The Berndt lab developed a cloud-based software called FLUORA, designed to label and analyze fluorescent cells in time-series microscopy images. FLUORA utilizes the Cellpose cell segmentation algorithm and a novel specialized cell alignment algorithm developed by the Berndt lab. With a user-friendly interface through Google Colab, FLUORA allows users to efficiently analyze their data, providing a convenient, free, and fast method for analyzing timecourse data.
+
+<p float="left">
+  <img src="https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png" width="120" />
+  <img src="./logo/fluora_with_text.png" width="500"" /> 
+</p>
 
 ## Table of Contents
 - [Motivations](#motivations)

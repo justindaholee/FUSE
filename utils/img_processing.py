@@ -28,9 +28,11 @@ extract_cells_as_dict(images_path: str, masks_path: str,
 
 @author: Shani Zuniga
 '''
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import h5py
 from PIL import Image, ImageOps
 
@@ -79,8 +81,10 @@ def process_image(img_data, size=(28, 28)) -> np.ndarray:
     del min_val, max_val, normalized_image, img
     return img_array
 
-def extract_cells_as_hdf5(images_path: str, masks_path: str, 
-                          output_file: str, channel: str) -> None:
+def extract_cells_as_hdf5(images_path: str,
+                          masks_path: str, 
+                          output_file: str,
+                          channel: str) -> None:
     """
     Extracts individual cell images from a multi-frame image and mask file, and writes
     them to an HDF5 file that can be accessed with keys like: "frame_{frame_idx}_
@@ -123,7 +127,8 @@ def extract_cells_as_hdf5(images_path: str, masks_path: str,
                     data=processed_img
                     )
 
-def extract_cells_as_dict(images_path: str, masks_path: str,
+def extract_cells_as_dict(images_path: str,
+                          masks_path: str,
                           channel: str) -> Dict[str, np.ndarray]:
     """
     Extracts individual cell images from a multi-frame image and mask file, and writes
@@ -163,3 +168,67 @@ def extract_cells_as_dict(images_path: str, masks_path: str,
 
             cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img
     return cell_dict
+
+# TODO: Add the functions below this point to the file header.
+def overlay_masks_labels(frame_data: pd.DataFrame,
+                         img: np.ndarray,
+                         masks: List[np.ndarray],
+                         show_labels: bool = True,
+                         col_name_label: str = 'Label',
+                         col_name_cell_id: str = 'ROI'
+                         ) -> None:
+    """
+    Overlay masks and labels onto the original image.
+
+    Args:
+        frame_data: DataFrame containing cell information for the current frame.
+        img: Original image as a numpy array.
+        masks: List of numpy arrays representing the masks for each cell.
+        show_labels: Whether to display label of each cell (default: True).
+        col_name_label: Name of 'label' feature in frame_data.
+        col_name_cell_id: Name of 'cell_id' feature in frame_data.
+    
+    Returns:
+        None
+    """
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap='gray')
+
+    for index, row in frame_data.iterrows():
+        cell_id = row[col_name_cell_id]
+        label = row[col_name_label]
+        mask = masks[cell_id]
+
+        # Create mask outline by finding contours and adding them to the ax object
+        contours = plt.contour(mask, levels=[0.5], colors='r', linewidths=1)
+        for path in contours.collections:
+            ax.add_artist(path)
+        
+        # Plot the label on the centroid of the cell
+        if show_labels and not pd.isna(label):
+            x, y = row['x'], row['y']
+            ax.text(x, y, str(label), color='w', fontsize=12, ha='center', va='center')
+
+    plt.axis('off')
+
+def display_frame(frame_idx: int,
+                  df: pd.DataFrame,
+                  img_data: np.ndarray, 
+                  mask_data: np.ndarray) -> None:
+    """
+    Display a single frame with masks and labels overlayed on the original image.
+
+    Args:
+        frame_idx: Index of the frame to display.
+        df: DataFrame containing cell information for all frames.
+        img_data: Numpy array containing image data for all frames.
+        mask_data: Numpy array containing mask data for all frames.
+    
+    Returns:
+        None
+    """
+    frame_df = df[df['frame'] == frame_idx]
+    frame_img = img_data[frame_idx]
+    frame_masks = [mask_data[frame_idx, cell_id] for cell_id in frame_df['cell_id']]
+
+    overlay_masks_labels(frame_df, frame_img, frame_masks)

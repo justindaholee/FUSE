@@ -4,7 +4,6 @@
 </h1>
 
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 
 ### *Keywords*: 

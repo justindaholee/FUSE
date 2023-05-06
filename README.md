@@ -70,7 +70,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Copyright (c) 2023 University of Washington Department of Bioengineering
 
 ## Acknowledgments
-- Acknowledge the authors, contributors, and any relevant institutions.
 - Aida Moghadasi, Justin Daho Lee, Andre Berndt, PhD.
-- Mary Gates Research Endowment
+- University of Washington Department of Bioengineering, Mary Gates Research Endowment
 - cellpose.org

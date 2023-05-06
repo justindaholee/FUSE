@@ -4,7 +4,7 @@
 </h1>
 
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
-<a target="_blank" href="https://colab.research.google.com/github/https://colab.research.google.com/github/shanizu/FLUORA/blob/main/FLUORA.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/shanizu/FLUORA/blob/main/FLUORA.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)

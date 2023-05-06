@@ -71,6 +71,6 @@ Copyright (c) 2023 University of Washington Department of Bioengineering
 
 ## Acknowledgments
 - Acknowledge the authors, contributors, and any relevant institutions.
-- Aida Moghadasi, Justin Daho Lee, Andre Berndt
+- Aida Moghadasi, Justin Daho Lee, Andre Berndt, PhD.
 - Mary Gates Research Endowment
 - cellpose.org

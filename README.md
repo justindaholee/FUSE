@@ -71,5 +71,6 @@ Copyright (c) 2023 University of Washington Department of Bioengineering
 
 ## Acknowledgments
 - Acknowledge the authors, contributors, and any relevant institutions.
-- Acknowledge any funding or support received for the project.
-- Mention any third-party libraries or resources used in the project.
+- Aida Moghadasi, Justin Daho Lee, Andre Berndt
+- Mary Gates Research Endowment
+- cellpose.org

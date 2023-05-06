@@ -221,7 +221,6 @@ lib.remove_short_lineages(10, len(masks))
 
 print("CELL IDENTIFICATION COMPLETE.")
 
-# TODO: add preview component
 # TODO: add part 3 to file header comment
 ### PART 3: Preview and Export Results#########################################
 

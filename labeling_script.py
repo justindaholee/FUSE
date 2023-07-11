@@ -172,7 +172,6 @@ lib = frame_by_frame(
     min_connectivity
     )
 
-
 ### PART 3: Preview and Export Results#########################################
 
 #9. Preview results

@@ -21,35 +21,30 @@ Outputs:
 
 Dependencies:
     os
-    math
-    numpy
+    sys
     pandas
-    tqdm
     sklearn
     tensorflow
     scipy
     lineage_managment
     img_processing
-    cell_similarity_metrics
+    frame_by_frame
 
 @author: Shani Zuniga
 '''
 import os
 import sys
-import math
 
 import numpy as np
 import pandas as pd
 
-from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from tensorflow import get_logger, keras
 from keras.callbacks import EarlyStopping
-from scipy.spatial.distance import cdist
 
 from utils.lineage_management import Library
 from utils.img_processing import read_multiframe_tif, extract_cells
-from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
+from utils.frame_by_frame import frame_by_frame
 
 get_logger().setLevel('ERROR')
 # USER INPUTS #################################################################
@@ -68,6 +63,9 @@ channel = "RFP"
 
 # Numerical value for max distance of which cells need for consideration
 search_radius = 50
+
+# Numerical value for minimum frames per lineage
+min_connectivity = 10
 
 # Whether preprocessing steps have already been completed, else will be saved
 import_preprocessing = True
@@ -160,75 +158,29 @@ else:
     print("PREPROCESSING COMPLETE.")
 
 ### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
-print("INITIATING FRAME-BY-FRAME CELL IDENTIFICATION...")
 
-# Initialize library for tracking lineages
+#7. Generate library of cells and their lineages
 lib = Library(masks[0], df)
 
-for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1,
-                    desc="Processing Frames", unit="frame"):
-    current_frame = i + 1
-    temp_df = df[df['Frame'] == current_frame]
+#8. Perform frame-by-frame pairwise cell labeling
+lib = frame_by_frame(
+    lib,
+    masks,
+    df,
+    cell_vectors,
+    search_radius,
+    min_connectivity
+    )
 
-    scores = []
-    for recent_cell in lib.all_recent():
-        curr_mask = masks[current_frame]
-        prev_mask = masks[recent_cell['frame']]
 
-        key = f'frame_{recent_cell["frame"]}_cell_{recent_cell["cell_id"]}'
-        recent_vec = cell_vectors[key]
-
-        new_cells = np.unique(curr_mask)[1:]
-        new_cells = new_cells[new_cells != 0]
-
-        recent_cell_coords = np.array([recent_cell['x'], recent_cell['y']])
-        new_cell_coords = (
-            temp_df[temp_df['ROI'].isin(new_cells - 1)][['x', 'y']].to_numpy()
-            )
-        distances = cdist(recent_cell_coords.reshape(1, -1), new_cell_coords)[0]
-        new_cells = new_cells[distances < search_radius]
-
-        for new_cell in new_cells:
-            if lib.is_recent_cell(current_frame, new_cell) == -1:
-                x_new, y_new = (
-                    temp_df[temp_df['ROI'] == (new_cell - 1)].iloc[0][['x', 'y']]
-                    )
-                
-                iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, 
-                                        new_cell, mask)
-
-                if iou_score > 0:
-                    key = f'frame_{current_frame}_cell_{new_cell}'
-                    new_vec = cell_vectors[key]
-                    visual_score = cosine_similarity(recent_vec, new_vec)
-
-                    distance = math.sqrt(
-                        (x_new - recent_cell['x'])**2 +
-                        (y_new - recent_cell['y'])**2
-                        )
-
-                    scores.append({
-                        'next_cell_id': new_cell,
-                        'next_cell_x': x_new,
-                        'next_cell_y': y_new,
-                        'lineage_id': recent_cell['lineage_id'],
-                        'iou_score': iou_score,
-                        'visual_score': visual_score,
-                        'distance': distance
-                        })
-    lib.identify_cells(current_frame, scores)
-lib.remove_short_lineages(10, len(masks))
-
-print("CELL IDENTIFICATION COMPLETE.")
-
-# TODO: add part 3 to file header comment
 ### PART 3: Preview and Export Results#########################################
 
+#9. Preview results
 results = lib.to_dataframe()
 results = results.rename(columns={'cell_id':'ROI', 'lineage_id':'Label'})
 results['ROI'] -= 1
 
 final_df = info_df.merge(results, on=['ROI', 'Frame'], how='left')
 
-# from pandasgui import show
-# show(final_df)
+from pandasgui import show
+show(final_df)

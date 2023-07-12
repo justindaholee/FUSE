@@ -46,7 +46,7 @@ The Berndt lab developed a cloud-based software called FLUORA, designed to label
 ## Prerequisites
 - Google Account for accessing Google Colab
 - Cellpose-generated segmentation masks
-- Fluorescence microscopy videos in TIF format (100-200 frames)
+- Fluorescence microscopy videos in TIF format
 
 ## Getting Started
 1. Clone or download the FLUORA repository to your local machine.

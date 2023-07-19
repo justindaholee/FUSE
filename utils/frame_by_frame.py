@@ -62,6 +62,8 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
             prev_mask = masks[recent_cell['frame']]
 
             key = f'frame_{recent_cell["frame"]}_cell_{recent_cell["cell_id"]}'
+            if key not in cell_vectors:
+                continue
             recent_vec = cell_vectors[key]
 
             new_cells = np.unique(curr_mask)[1:]
@@ -85,6 +87,8 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
 
                     if iou_score > 0:
                         key = f'frame_{current_frame}_cell_{new_cell}'
+                        if key not in cell_vectors:
+                            continue
                         new_vec = cell_vectors[key]
                         visual_score = cosine_similarity(recent_vec, new_vec)
 

@@ -156,10 +156,11 @@ def get_deltaF(df: pd.DataFrame, channel: str, n_frames: int) -> pd.DataFrame:
     df = df[df['Channel'] == channel]
     df = df.dropna()
     
-    delta = pd.DataFrame()
+    delta_list = []
     for ID in df['Label'].unique():
         temp_df = df[df['Label'] == ID]
         base_F = temp_df.head(n_frames)['Intensity'].mean()
         temp_df['deltaoverFo'] = temp_df['Intensity'] / base_F
-        delta = pd.concat([delta, temp_df], ignore_index=True)
+        delta_list.append(temp_df)
+    delta = pd.concat(delta_list, ignore_index=True)
     return delta

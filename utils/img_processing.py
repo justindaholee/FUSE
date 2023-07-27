@@ -24,7 +24,7 @@ Functions:
                 channel: str) -> Dict[str, np.ndarray]:
         Extracts individual cell images from a multi-frame image and mask file, 
         and writes them to a dictionary.
-    get_deltaF(df: pd.DataFrame, channel: str) -> pd.DataFrame:
+    get_deltaF(df: pd.DataFrame, channel: str, n_frames: int) -> pd.DataFrame:
         Calculates the deltaF/F for each cell in a dataframe.
 
 @author: Shani Zuniga

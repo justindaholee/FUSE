@@ -70,7 +70,6 @@ min_connectivity = 10
 # Whether preprocessing steps have already been completed, else will be saved
 import_preprocessing = True
 
-### PART 1: Import data and Preprocessing######################################
 print("IMPORTING DATA AND PREPROCESSING...")
 
 # 1. Import data and check that paths are valid
@@ -140,7 +139,7 @@ else:
         ])
     autoencoder = keras.models.Sequential([encoder, decoder])
     autoencoder.compile(loss="binary_crossentropy",
-                    optimizer='adam')
+                        optimizer='adam')
     autoencoder.fit(x_train, x_train, epochs=100, validation_data=[x_test, x_test],
                     callbacks=[early_stop], verbose=0) 
     del x_train, x_test
@@ -157,12 +156,10 @@ else:
 
     print("PREPROCESSING COMPLETE.")
 
-### PART 2: Frame-by-frame Pairwise Cell Labeling##############################
-
-#7. Generate library of cells and their lineages
+# 7. Generate library of cells and their lineages
 lib = Library(masks[0], df)
 
-#8. Perform frame-by-frame pairwise cell labeling
+# 8. Perform frame-by-frame pairwise cell labeling
 lib = frame_by_frame(
     lib,
     masks,
@@ -172,9 +169,7 @@ lib = frame_by_frame(
     min_connectivity
     )
 
-### PART 3: Preview and Export Results#########################################
-
-#9. Preview results
+# 9. Preview results
 results = lib.to_dataframe()
 results = results.rename(columns={'cell_id':'ROI', 'lineage_id':'Label'})
 results['ROI'] -= 1

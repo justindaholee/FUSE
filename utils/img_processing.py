@@ -141,7 +141,8 @@ def extract_cells(images_path: str, masks_path: str,
     del image_frames, mask_frames
     return cell_dict
 
-def get_deltaF(df: pd.DataFrame, channel: str, n_frames: int) -> pd.DataFrame:
+def get_deltaF(df: pd.DataFrame, channel: str = None, n_frames: int = 5
+               ) -> pd.DataFrame:
     '''
     Calculates the deltaF/F for each cell in a dataframe.
     
@@ -153,14 +154,15 @@ def get_deltaF(df: pd.DataFrame, channel: str, n_frames: int) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A dataframe containing the cell images, metadata, and deltaF/F.
     '''
-    df = df[df['Channel'] == channel]
+    if channel is not None:
+        df = df[df['Channel'] == channel]
     df = df.dropna()
     
     delta_list = []
     for ID in df['Label'].unique():
         temp_df = df[df['Label'] == ID]
         base_F = temp_df.head(n_frames)['Intensity'].mean()
-        temp_df['deltaoverFo'] = temp_df['Intensity'] / base_F
+        temp_df['deltaFoverFo'] = temp_df['Intensity'] / base_F
         delta_list.append(temp_df)
     delta = pd.concat(delta_list, ignore_index=True)
     return delta

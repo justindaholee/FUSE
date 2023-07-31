@@ -195,14 +195,17 @@ class Library:
                 y = scores[match_index]['next_cell_y']
                 )
             self.add_cell(matched_cell)
-
+            
             matched_cell_id = scores[match_index]['next_cell_id']
+            matched_lineage_id = scores[match_index]['lineage_id']
 
-            cell_id_indices = [i for i, score in enumerate(scores)
-                               if score['next_cell_id'] == matched_cell_id]
+            deletion_indices = [i for i, score in enumerate(scores)
+                               if score['next_cell_id'] == matched_cell_id or 
+                                  score['lineage_id'] == matched_lineage_id]
             scores = [score for score in scores 
-                      if score['next_cell_id'] != matched_cell_id]
-            normalized_scores = np.delete(normalized_scores, cell_id_indices)
+                      if score['next_cell_id'] != matched_cell_id and
+                         score['lineage_id'] != matched_lineage_id]
+            normalized_scores = np.delete(normalized_scores, deletion_indices)      
     
     def remove_short_lineages(self, min_percent: float, total_frames: int) -> None:
             """

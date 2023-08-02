@@ -1,5 +1,4 @@
 <h1>
-  <img src=".\logo\fluora_nobg.png" alt="Your Alt Text" height="25">
   <b>FLUORA</b>: Fluorescent Cell Labeling and Analysis
 </h1>
 

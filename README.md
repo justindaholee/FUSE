@@ -12,7 +12,6 @@ The Berndt lab developed a cloud-based software called FLUORA, designed to label
 
 <p float="left">
   <img src="https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png" width="120" />
-  <img src="./logo/fluora_with_text.png" width="500"" /> 
 </p>
 
 ## Table of Contents

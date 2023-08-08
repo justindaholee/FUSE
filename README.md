@@ -1,14 +1,14 @@
 <h1>
-  <b>FLUORA</b>: Fluorescent Cell Labeling and Analysis
+  <b>FUSE</b>: Fluorescent Cell Labeling and Analysis
 </h1>
 
 Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series Data
-<a target="_blank" href="https://colab.research.google.com/github/shanizu/FLUORA/blob/main/FLUORA.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/shanizu/FUSE/blob/main/FUSE.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-The Berndt lab developed a cloud-based software called FLUORA, designed to label and analyze fluorescent cells in time-series microscopy images. FLUORA utilizes the Cellpose cell segmentation algorithm and a novel specialized cell labeling algorithm developed by the Berndt lab. With a user-friendly interface through Google Colab, FLUORA allows users to efficiently analyze their data, providing a convenient, free, and fast method for analyzing timecourse data.
+The Berndt lab developed a cloud-based software called FUSE, designed to label and analyze fluorescent cells in time-series microscopy images. FUSE utilizes the Cellpose cell segmentation algorithm and a novel specialized cell labeling algorithm developed by the Berndt lab. With a user-friendly interface through Google Colab, FUSE allows users to efficiently analyze their data, providing a convenient, free, and fast method for analyzing timecourse data.
 
 <p float="left">
   <img src="https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png" width="120" />
@@ -47,16 +47,16 @@ The Berndt lab developed a cloud-based software called FLUORA, designed to label
 - Fluorescence microscopy videos in TIF format
 
 ## Getting Started
-1. Clone or download the FLUORA repository to your local machine.
+1. Clone or download the FUSE repository to your local machine.
 2. Upload the repository to your Google Drive.
-3. Open the main FLUORA notebook in Google Colab.
+3. Open the main FUSE notebook in Google Colab.
 4. Set up the Google Colab environment with the required dependencies.
 
 ## Customization
 Advanced users can modify the underlying code to better suit their specific cell types or experiment requirements. Customization options include adjusting the convolutional autoencoder parameters and modifying the tracking algorithm.
 
 ## Results and Output
-FLUORA outputs the delta f (change in fluorescence) of the tracked cells over time, providing valuable insights into cell signaling events.
+FUSE outputs the delta f (change in fluorescence) of the tracked cells over time, providing valuable insights into cell signaling events.
 
 ## Keywords: 
 in vitro analysis algorithm, transparent data handling, high-throughput, unbiased, user-friendly, visual phenotyping

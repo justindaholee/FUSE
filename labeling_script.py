@@ -96,7 +96,7 @@ df[['x', 'y']] = centroids
 folder_path, file_name_with_ext = os.path.split(imgs_path)
 file_name, file_ext = os.path.splitext(file_name_with_ext)
 
-new_folder_path = os.path.join(folder_path, file_name + '_FLUORA')
+new_folder_path = os.path.join(folder_path, file_name + '_FUSE')
 vectors_path = os.path.join(new_folder_path, 'encoded_cells.npz')
 encoder_path = os.path.join(new_folder_path, 'cell_encoder.h5')
 

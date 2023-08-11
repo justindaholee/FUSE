@@ -11,8 +11,8 @@ Specialized Pipeline for Cell Segmentation and ROI identification in Time-Series
 The Berndt lab developed a cloud-based software called FUSE, designed to label and analyze fluorescent cells in time-series microscopy images. FUSE utilizes the Cellpose cell segmentation algorithm and a novel specialized cell labeling algorithm developed by the Berndt lab. With a user-friendly interface through Google Colab, FUSE allows users to efficiently analyze their data, providing a convenient, free, and fast method for analyzing timecourse data.
 
 <p float="left">
-  <img src="fuse.png" width="120">
   <img src="https://res.cloudinary.com/apideck/image/upload/v1615737977/icons/google-colab.png" width="120" />
+  <img src="fuse.png" width="250">
 </p>
 
 ## Table of Contents

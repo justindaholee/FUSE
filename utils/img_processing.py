@@ -6,9 +6,7 @@ images and masks, and processing the cell images.
 
 Dependencies:
 
-    typing
     numpy
-    pandas
     PIL
     tqdm
 
@@ -24,15 +22,12 @@ Functions:
                 channel: str) -> Dict[str, np.ndarray]:
         Extracts individual cell images from a multi-frame image and mask file, 
         and writes them to a dictionary.
-    get_deltaF(df: pd.DataFrame, channel: str, n_frames: int) -> pd.DataFrame:
-        Calculates the deltaF/F for each cell in a dataframe.
 
 @author: Shani Zuniga
 '''
 from typing import Dict, List
 
 import numpy as np
-import pandas as pd
 from PIL import Image, ImageOps
 from tqdm import tqdm
 
@@ -140,29 +135,3 @@ def extract_cells(images_path: str, masks_path: str,
                 cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img
     del image_frames, mask_frames
     return cell_dict
-
-def get_deltaF(df: pd.DataFrame, channel: str = None, n_frames: int = 5
-               ) -> pd.DataFrame:
-    '''
-    Calculates the deltaF/F for each cell in a dataframe.
-    
-    Args:
-        df (pd.DataFrame): A dataframe containing the cell images and metadata.
-        channel (str): The channel to use for calculating deltaF/F.
-        n_frames (int): The number of frames to use for calculating the baseline.
-
-    Returns:
-        pd.DataFrame: A dataframe containing the cell images, metadata, and deltaF/F.
-    '''
-    if channel is not None:
-        df = df[df['Channel'] == channel]
-    df = df.dropna()
-    
-    delta_list = []
-    for ID in df['Label'].unique():
-        temp_df = df[df['Label'] == ID]
-        base_F = temp_df.head(n_frames)['Intensity'].mean()
-        temp_df['deltaFoverFo'] = temp_df['Intensity'] / base_F
-        delta_list.append(temp_df)
-    delta = pd.concat(delta_list, ignore_index=True)
-    return delta

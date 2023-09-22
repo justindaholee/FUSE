@@ -135,3 +135,44 @@ def extract_cells(images_path: str, masks_path: str,
                 cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img
     del image_frames, mask_frames
     return cell_dict
+
+def rearrange_dimensions(image, num_frames, multichannel, channel_info):
+	"""
+	Rearranges the dimensions of an image for downstream processing such
+	that they are ordered as (channels, frames, height, width).
+
+	Args:
+		image (numpy.ndarray): The input image.
+		num_frames (int): The number of frames in the image.
+		multichannel (bool): Whether the image has multiple channels.
+		channel_info (list): Information about the image channels.
+
+	Returns:
+		numpy.ndarray: The processed image with rearranged dimensions.
+	"""
+	try: # find the dimension that determines
+		image_dim = image.shape
+		frame_dim_idx = image_dim.index(num_frames)
+		if image.ndim == 3 and not multichannel:
+			if frame_dim_idx == 0:
+				image = image[np.newaxis, :, :, :]
+			elif frame_dim_idx == 2:
+				image = image[:, :, np.newaxis, :]
+				image = np.transpose(image, (2, 3, 0, 1))
+		elif image.ndim == 4:
+			if frame_dim_idx == 0:
+				image = np.transpose(image, (1, 0, 2, 3))
+			elif frame_dim_idx == 2:
+				image = np.transpose(image, (3, 2, 0, 1))
+			elif frame_dim_idx == 3:
+				image = np.transpose(image, (2, 3, 0, 1))
+	except ValueError:
+		if image.ndim == 2:
+			image = image[np.newaxis, np.newaxis, :, :]
+		elif image.ndim == 3 and multichannel:
+			if image.index(len(channel_info)) == 0:
+				image = image[:, np.newaxis, :, :]
+			elif image.index(len(channel_info)) == 2:
+				image = image[:, :, :, np.newaxis]
+				image = np.transpose(image, (2, 3, 0, 1))
+	return image

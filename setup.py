@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
   
 setup(
     name='fuse_toolkit',
-    version='0.1.0',
+    version='0.1.0b1',
     description='FUSE toolkit supports fluorescent cell image alignment and analysis.',
     author='Shani Zuniga',
     author_email='shani.zuniga@gmail.com',

@@ -22,6 +22,9 @@ Functions:
                 channel: str) -> Dict[str, np.ndarray]:
         Extracts individual cell images from a multi-frame image and mask file, 
         and writes them to a dictionary.
+    rearrange_dimensions(image, num_frames, multichannel, channel_info):
+        Rearranges the dimensions of an image for downstream processing such
+        that they are ordered as (channels, frames, height, width).
 
 @author: Shani Zuniga
 '''
@@ -150,7 +153,7 @@ def rearrange_dimensions(image, num_frames, multichannel, channel_info):
 	Returns:
 		numpy.ndarray: The processed image with rearranged dimensions.
 	"""
-	try: # find the dimension that determines
+	try:
 		image_dim = image.shape
 		frame_dim_idx = image_dim.index(num_frames)
 		if image.ndim == 3 and not multichannel:

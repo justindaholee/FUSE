@@ -17,8 +17,7 @@ Dependencies:
     pandas
     tqdm
     scipy
-    utils.lineage_management
-    utils.cell_similarity_metrics
+    fuse_toolkit
 '''
 
 import math
@@ -30,8 +29,8 @@ import pandas as pd
 from tqdm import tqdm
 from scipy.spatial.distance import cdist
 
-from utils.lineage_management import Library
-from utils.cell_similarity_metrics import calculate_iou, cosine_similarity
+from .lineage_management import Library
+from .cell_similarity_metrics import calculate_iou, cosine_similarity
 
 
 def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame, 

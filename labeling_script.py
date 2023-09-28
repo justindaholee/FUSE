@@ -26,9 +26,7 @@ Dependencies:
     sklearn
     tensorflow
     scipy
-    lineage_managment
-    img_processing
-    frame_by_frame
+    fuse_toolkit
 
 @author: Shani Zuniga
 '''
@@ -42,9 +40,9 @@ from sklearn.model_selection import train_test_split
 from tensorflow import get_logger, keras
 from keras.callbacks import EarlyStopping
 
-from utils.lineage_management import Library
-from utils.img_processing import read_multiframe_tif, extract_cells
-from utils.frame_by_frame import frame_by_frame
+from fuse_toolkit.lineage_management import Library
+from fuse_toolkit.img_processing import read_multiframe_tif, extract_cells
+from fuse_toolkit.frame_by_frame import frame_by_frame
 
 get_logger().setLevel('ERROR')
 # USER INPUTS #################################################################
@@ -176,5 +174,5 @@ results['ROI'] -= 1
 
 final_df = info_df.merge(results, on=['ROI', 'Frame'], how='left')
 
-from pandasgui import show
-show(final_df)
+# from pandasgui import show
+# show(final_df)

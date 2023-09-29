@@ -6,7 +6,7 @@ fluorescent cell images, including functions for frame-by-frame analysis,
 image processing, and signal derivation.
 """
 
-__version__ = "0.1.0b1"
+__version__ = "0.1.0b2"
 __author__ = 'Shani Zuniga'
 __credits__ = 'Berndt Lab, University of Washington'
 

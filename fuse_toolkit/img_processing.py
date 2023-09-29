@@ -32,7 +32,7 @@ from typing import Dict, List
 
 import numpy as np
 from PIL import Image, ImageOps
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 
 def read_multiframe_tif(filename: str,

@@ -5,13 +5,17 @@ with open('README.md', 'r') as readme_file:
   
 setup(
     name='fuse_toolkit',
-    version='0.1.0b6',
+    version='0.1.0b7',
     description='FUSE toolkit supports fluorescent cell image alignment and analysis.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Shani Zuniga',
     author_email='shani.zuniga@gmail.com',
     license='MIT',
+    project_urls={
+        'Source Code': 'https://github.com/shanizu/FUSE',
+        # 'Documentation': 'https://',
+    },
     packages=find_packages(),
     install_requires=[
         'numpy',

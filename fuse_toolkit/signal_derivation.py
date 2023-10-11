@@ -11,14 +11,14 @@ Dependencies:
 
 Functions:
 
-    deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-           naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
-           n_frames: int =  5) -> List[float]:
+    _deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+            naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
+            n_frames: int =  5) -> List[float]:
         Calculates the deltaF/F for each cell in a dataframe for a specific file and
         updates the signal list.
-    ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-                naming: List[str], column_name: str, channel_1: str, channel_2: str
-                ) -> List[float]:
+    _ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+                 naming: List[str], column_name: str, channel_1: str, channel_2: str
+                 ) -> List[float]:
         Calculates the ratiometric signal for each cell in a dataframe
         for a specific file and updates the signal list.
     get_signal(df: pd.DataFrame, file_names: List[str], naming: List[str],
@@ -34,7 +34,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+def _deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
            naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
            n_frames: int =  5) -> List[float]:
     '''
@@ -78,7 +78,7 @@ def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
         updated_signal = list(np.where(channel_filter, new_deltaF, signal))
     return updated_signal
 
-def ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+def _ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
                 naming: List[str], column_name: str, channel_1: str, channel_2: str
                 ) -> List[float]:
     '''
@@ -166,12 +166,12 @@ def get_signal(df: pd.DataFrame, file_names: List[str], naming: List[str],
         
         # Update signal array for file
         if signal_info['type'] == 'deltaFoverFo':
-            new_signal = deltaF(signal_array, df, file_filter, naming,
-                                signal_info['name'], signal_info['n_frames'])
+            new_signal = _deltaF(signal_array, df, file_filter, naming,
+                                 signal_info['name'], signal_info['n_frames'])
         elif signal_info['type'] == 'ratiometric (multichannel only)':
-            new_signal = ratiometric(signal_array, df, file_filter, naming,
-                                     signal_info['name'], signal_info['channel_1'],
-                                     signal_info['channel_2'])
+            new_signal = _ratiometric(signal_array, df, file_filter, naming,
+                                      signal_info['name'], signal_info['channel_1'],
+                                      signal_info['channel_2'])
 
         signal_array = list(np.where(file_filter, new_signal, signal_array))
     

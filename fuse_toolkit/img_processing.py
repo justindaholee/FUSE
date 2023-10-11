@@ -16,7 +16,7 @@ Functions:
                         channel_selection: List[int]=[1]) -> list[np.ndarray]:
         Reads a multi-frame tif file and returns a list of ndarrays of frames
         for the selected channels.
-    process_image(img_data, size=(28, 28)) -> np.ndarray:
+    _process_image(img_data, size=(28, 28)) -> np.ndarray:
         Rescale, convert to grayscale, pad, and normalize an input image.
     extract_cells(images_path: str, masks_path: str,
                 channel: str) -> Dict[str, np.ndarray]:
@@ -67,7 +67,7 @@ def read_multiframe_tif(filename: str,
             selected_frames.extend(np.array(channel_frames))
     return selected_frames
 
-def process_image(img_data, size=(28, 28)) -> np.ndarray:
+def _process_image(img_data, size=(28, 28)) -> np.ndarray:
     """
     Rescale, convert to grayscale, pad, and normalize an input image.
 
@@ -132,7 +132,7 @@ def extract_cells(images_path: str, masks_path: str,
             cell_mask = (mask_frame == cell_id)
             clipped_image = image_frame * cell_mask
             cell_image = clipped_image[x_min:x_max+1, y_min:y_max+1]
-            processed_img = process_image(cell_image)
+            processed_img = _process_image(cell_image)
 
             if processed_img is not None:
                 cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img

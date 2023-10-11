@@ -29,6 +29,8 @@ class Experiment:
             self.folder = os.path.abspath(os.path.join(self.path, os.pardir))
         elif isDirectory:
             self.folder = self.path
+        else:
+            raise FileNotFoundError("The path does not exist: " + self.path)
             
         #Create a folder where segmentation is saved
         Path(self.folder + "/" + date + "_" + expID).mkdir(parents=True, exist_ok=True)

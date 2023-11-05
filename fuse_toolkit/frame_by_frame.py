@@ -34,7 +34,8 @@ from .cell_similarity_metrics import calculate_iou, cosine_similarity
 
 
 def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame, 
-                   cell_vectors: dict, search_radius: float, connectivity: int
+                   cell_vectors: dict, search_radius: float, connectivity: int,
+                   iou_weight=0.6, visual_weight=0.4, must_overlap=True
                    ) -> Library:
     """
     Process each frame of the image sequence and identify cells that are similar to 
@@ -47,6 +48,9 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
     - cell_vectors: Dictionary with feature vectors for each cell.
     - search_radius: Float value for max distance between similar cells.
     - connectivity: Integer value for minimum frames per lineage.
+    - iou_weight: float value to scale iou score by; default=0.6
+    - visual_weight: float value to scale visual score by; default=0.4
+    - must_overlap: boolean kconsider cells across frames only if they overlap
     Returns:
     - A lineage library object containing identified cells and their lineages.
     """
@@ -84,7 +88,7 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
                     iou_score = calculate_iou(recent_cell['cell_id'], prev_mask, 
                                             new_cell, mask)
 
-                    if iou_score > 0:
+                    if (must_overlap and iou_score > 0) or (not must_overlap):
                         key = f'frame_{current_frame}_cell_{new_cell}'
                         if key not in cell_vectors:
                             continue
@@ -105,6 +109,6 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
                             'visual_score': visual_score,
                             'distance': distance
                             })
-        lib.identify_cells(current_frame, scores)
+        lib.identify_cells(current_frame, scores, iou_weight, visual_weight)
     lib.remove_short_lineages(connectivity, len(masks))
     return lib

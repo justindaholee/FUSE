@@ -152,7 +152,7 @@ class Library:
         return -1
     
     def identify_cells(self, current_frame: int, scores: List[Dict], 
-                    iou_weights=0.6, visual_weights=0.4) -> None:
+                    iou_weight=0.6, visual_weight=0.4) -> None:
         """
         Find the best matching cell based on IoU and visual scores, and add it to the
         Lineage Library.
@@ -162,7 +162,8 @@ class Library:
             cell (dict): Reference cell with its features.
             scores (list of dict): Potential matching cells with their
                 features and scores.
-
+            iou_weight (float): value to scale iou score by; default=0.6
+            visual_weight (float): value to scale visual score by; default=0.4
         Returns:
             None
         """
@@ -180,8 +181,8 @@ class Library:
             visual_scores = np.ones_like(visual_scores)
 
         normalized_scores = (
-            iou_weights * np.array([score['iou_score'] for score in scores]) +
-            visual_weights * visual_scores
+            iou_weight * np.array([score['iou_score'] for score in scores]) +
+            visual_weight * visual_scores
         )
 
         while scores:

@@ -1,0 +1,20 @@
+{
+    "date": "0000-00-00",
+    "expID": "TestExp",
+    "path": "tests\\test_resources\\image.tif",
+    "parseID": [
+        "Name",
+        "Well"
+    ],
+    "separator": "_",
+    "MultiChannel": true,
+    "channelInfo": [
+        "RFP",
+        "GFP"
+    ],
+    "channelToSegment": "RFP",
+    "numFrames": 90,
+    "frameToSegment": "all",
+    "frameInterval": 1,
+    "Expnote": "test note"
+}

@@ -23,6 +23,9 @@ setup(
         'Pillow',
         'tqdm',
         'scipy',
+        'cellpose',
+        'matlotlib',
+        'skimage'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

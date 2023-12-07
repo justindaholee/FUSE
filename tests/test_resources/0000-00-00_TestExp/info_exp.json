@@ -7,7 +7,7 @@
         "Well"
     ],
     "separator": "_",
-    "MultiChannel": true,
+    "multiChannel": true,
     "channelInfo": [
         "RFP",
         "GFP"
@@ -16,5 +16,5 @@
     "numFrames": 90,
     "frameToSegment": "all",
     "frameInterval": 1,
-    "Expnote": "test note"
+    "expNote": "test note"
 }

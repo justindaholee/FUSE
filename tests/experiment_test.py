@@ -21,7 +21,7 @@ class TestExperimentClass:
         self.numFrames = 90
         self.frameInterval = 1
         self.frameToSegment = 'all'
-        self.Expnote = 'test note'
+        self.expNote = 'test note'
         self.test_folder = os.path.join('tests', 'test_resources',
                                         self.date + "_" + self.expID)
         self.json_date = '0000-00-00'
@@ -38,7 +38,7 @@ class TestExperimentClass:
         experiment = Experiment(self.date, self.expID, self.path, self.parseID,
                                 self.separator, self.channelInfo, self.channelToSegment,
                                 self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.Expnote)
+                                self.expNote)
         assert experiment.date == self.date
         assert experiment.expID == self.expID
         assert experiment.path == self.path
@@ -49,7 +49,7 @@ class TestExperimentClass:
         assert experiment.numFrames == self.numFrames
         assert experiment.frameInterval == self.frameInterval
         assert experiment.frameToSegment == 'all'
-        assert experiment.Expnote == self.Expnote
+        assert experiment.expNote == self.expNote
         assert hasattr(experiment, 'folder')
 
     def test_folder_creation(self, setup):
@@ -57,7 +57,7 @@ class TestExperimentClass:
         experiment = Experiment(self.date, self.expID, self.path, self.parseID,
                                 self.separator, self.channelInfo, self.channelToSegment,
                                 self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.Expnote)
+                                self.expNote)
 
         # Main experiment folder
         exp_folder_path = os.path.join(experiment.folder, self.date + '_' + self.expID)
@@ -76,7 +76,7 @@ class TestExperimentClass:
         experiment = Experiment(self.date, self.expID, self.path, self.parseID,
                                 self.separator, self.channelInfo, self.channelToSegment,
                                 self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.Expnote)
+                                self.expNote)
         
         info_file_path = os.path.join(experiment.folder, self.date + '_' + self.expID, 'info_exp.json')
 
@@ -96,13 +96,13 @@ class TestExperimentClass:
         assert info_data['path'] == self.path
         assert info_data['parseID'] == expected_parseID
         assert info_data['separator'] == self.separator
-        assert info_data['MultiChannel'] == (len(expected_channelInfo) > 1)
+        assert info_data['multiChannel'] == (len(expected_channelInfo) > 1)
         assert info_data['channelInfo'] == expected_channelInfo
         assert info_data['channelToSegment'] == self.channelToSegment
         assert info_data['numFrames'] == self.numFrames
         assert info_data['frameInterval'] == self.frameInterval
         assert info_data['frameToSegment'] == expected_frameToSegment
-        assert info_data['Expnote'] == self.Expnote
+        assert info_data['expNote'] == self.expNote
 
     def test_from_json(self, setup):
         # Test if the Experiment object is initialized correctly from JSON
@@ -118,15 +118,15 @@ class TestExperimentClass:
         assert experiment.numFrames == self.numFrames
         assert experiment.frameInterval == self.frameInterval
         assert experiment.frameToSegment == self.frameToSegment
-        assert experiment.Expnote == self.Expnote
-        assert experiment.MultiChannel == (len(self.channelInfo.split(self.separator)) > 1)
+        assert experiment.expNote == self.expNote
+        assert experiment.multiChannel == (len(self.channelInfo.split(self.separator)) > 1)
         
     def test_preview_segmentation(self, setup):
         # Initialize the Experiment object with test data
         experiment = Experiment(self.date, self.expID, self.path, self.parseID,
                                 self.separator, self.channelInfo, self.channelToSegment,
                                 self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.Expnote)
+                                self.expNote)
 
         # Test parameters for preview_segmentation
         min_size = 100

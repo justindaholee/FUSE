@@ -25,8 +25,8 @@ class Experiment:
         numFrames (int): The number of frames in the experiment.
         frameInterval (float): The interval between frames.
         frameToSegment (str/int): The specific frame or 'all' frames to segment.
-        Expnote (str): Notes associated with the experiment.
-        MultiChannel (bool): Flag to indicate if there are multiple channels.
+        expNote (str): Notes associated with the experiment.
+        multiChannel (bool): Flag to indicate if there are multiple channels.
         folder (str): The folder path for the experiment.
 
     Methods:
@@ -34,7 +34,7 @@ class Experiment:
     """
     
     def __init__(self, date, expID, path, parseID, separator, channelInfo, 
-                 channelToSegment, numFrames, frameInterval, frameToSegment, Expnote):
+                 channelToSegment, numFrames, frameInterval, frameToSegment, expNote):
         """
         Initialize the Experiment object with the provided parameters.
 
@@ -49,7 +49,7 @@ class Experiment:
             numFrames (int): The number of frames in the experiment.
             frameInterval (float): The interval between frames.
             frameToSegment (str): The specific frame or 'all' frames to segment.
-            Expnote (str): Notes associated with the experiment.
+            expNote (str): Notes associated with the experiment.
         """
         # Initialize instance variables
         self.date = date
@@ -62,8 +62,8 @@ class Experiment:
         self.numFrames = numFrames
         self.frameInterval = frameInterval
         self.frameToSegment = self._parse_frame_to_segment(frameToSegment)
-        self.Expnote = Expnote
-        self.MultiChannel = len(self.channelInfo) > 1
+        self.expNote = expNote
+        self.multiChannel = len(self.channelInfo) > 1
 
         # Determine and create experiment folder and directories
         self.folder = self._determine_folder(path)
@@ -92,10 +92,11 @@ class Experiment:
                    numFrames=data.get('numFrames'),
                    frameInterval=data.get('frameInterval'),
                    frameToSegment=str(data.get('frameToSegment', 'all')),
-                   Expnote=data.get('Expnote'))
+                   expNote=data.get('expNote'))
             
             
     def _determine_folder(self, path):
+        # Identifies folder of interest and returns path
         if os.path.isdir(path):
             return path
         elif os.path.splitext(path)[-1].lower() == '.tif':
@@ -105,6 +106,7 @@ class Experiment:
 
 
     def _create_experiment_directory(self):
+        # Creates experiment directory if it doesn't exist
         exp_folder = os.path.join(self.folder, f"{self.date}_{self.expID}")
         Path(exp_folder).mkdir(parents=True, exist_ok=True)
         Path(os.path.join(exp_folder, "segmentations")).mkdir(parents=True, exist_ok=True)
@@ -112,6 +114,7 @@ class Experiment:
 
 
     def _save_experiment_info(self, exp_folder):
+        # Creates json file with experiment info if doesn't exist
         info_file = os.path.join(exp_folder, 'info_exp.json')
         if not os.path.exists(info_file):
             with open(info_file, 'w') as f:
@@ -119,24 +122,26 @@ class Experiment:
 
 
     def _write_experiment_info(self, file_object):
+        # Writes experiment data to json file
         info_dict = {
             "date": self.date,
             "expID": self.expID,
             "path": self.path,
             "parseID": self.parseID,
             "separator": self.separator,
-            "MultiChannel": self.MultiChannel,
+            "multiChannel": self.multiChannel,
             "channelInfo": self.channelInfo,
             "channelToSegment": self.channelToSegment,
             "numFrames": self.numFrames,
             "frameToSegment": self.frameToSegment,
             "frameInterval": self.frameInterval,
-            "Expnote": self.Expnote
+            "expNote": self.expNote
         }
         json.dump(info_dict, file_object, indent=4)
 
 
     def _parse_frame_to_segment(self, frameToSegment):
+        # Handles frameToSegment file format
         return int(frameToSegment) if frameToSegment != 'all' else frameToSegment
 
         
@@ -184,7 +189,7 @@ class Experiment:
 
     
     def _initialize_model(self, Custom_Model, model_path, Omnipose):
-        # Method to initialize the segmentation model
+        # Initializes the segmentation model and returns it
         if Custom_Model:
             return models.CellposeModel(gpu='use_GPU', pretrained_model=model_path)
         elif Omnipose:
@@ -193,7 +198,7 @@ class Experiment:
     
     
     def _find_image_files(self):
-        # Method to find image files in the given path
+        # Finds image files in the given path and returns filenames
         if os.path.isdir(self.path):
             return sorted(glob.glob(os.path.join(self.path, '*.tif')))
         elif os.path.splitext(self.path)[-1].lower() == '.tif':
@@ -202,8 +207,8 @@ class Experiment:
 
     
     def _prepare_sample_image(self, image_path):
-        # Method to prepare the sample image fkjhkjhor segmentation
+        # Isolates and prepares sample image, returns single image
         image = io.imread(image_path)
-        image = rearrange_dimensions(image, self.numFrames, self.MultiChannel, self.channelInfo)
+        image = rearrange_dimensions(image, self.numFrames, self.multiChannel, self.channelInfo)
         image = image[self.channelInfo.index(self.channelToSegment)][0]
         return np.squeeze(image)

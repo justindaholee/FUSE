@@ -139,48 +139,6 @@ class Experiment:
     def _parse_frame_to_segment(self, frameToSegment):
         return int(frameToSegment) if frameToSegment != 'all' else frameToSegment
 
-
-    # def preview_segmentation(self, min_size=30, flow_threshold=0.4, mask_threshold=0.0, rescale=1,
-    #                          diameter=None, Custom_Model=False, model_path=None, Omnipose=False,
-    #                          output=True):
-    #     # Declare model
-    #     if Custom_Model:
-    #         model = models.CellposeModel(gpu='use_GPU', pretrained_model=model_path)
-    #     elif Omnipose:
-    #         model = models.CellposeModel(gpu='use_GPU', model_type='cyto2_omni')
-    #     else:
-    #         model = models.Cellpose(gpu='use_GPU', model_type='cyto2')
-            
-    #     # Find image files
-    #     if os.path.isdir(self.path):
-    #         files = sorted(glob.glob(os.path.join(self.path, '*.tif')))
-    #     elif os.path.splitext(self.path)[-1].lower() == '.tif':
-    #         files = [self.path]
-            
-    #     chosen = random.choices(files, k=1)
-    #     image_name = os.path.basename(chosen[0])
-    #     image = io.imread(chosen[0])
-        
-    #     # Handle dimensions, should be 4 dim (frames, channels, height, width)
-    #     image = rearrange_dimensions(image, self.numFrames, self.MultiChannel, self.channelInfo)
-        
-    #     # Create example image
-    #     rep_image = image[self.channelInfo.index(self.channelToSegment)][0]
-    #     rep_image = np.squeeze(rep_image)
-
-    #     masks, flows, styles, diams = model.eval(rep_image, channels=[0, 0],
-    #                                              flow_threshold=flow_threshold,
-    #                                              cellprob_threshold=mask_threshold,
-    #                                              min_size=min_size, diameter=diameter)
-
-    #     info = f"min_size: {str(min_size)}, flow: {str(flow_threshold)}, mask: {str(mask_threshold)}, rescale: {str(rescale)}, diameter: {str(diameter)}"
-
-    #     if output:
-    #         print(chosen[0])
-    #     show_overlay(rep_image, masks, info, image_name, utils.outlines_list(masks), show_output=output)
-
-    #     del image, rep_image, masks, flows, styles, diams
-        
         
     def preview_segmentation(self, min_size=30, flow_threshold=0.4,
                              mask_threshold=0.0, rescale=1,

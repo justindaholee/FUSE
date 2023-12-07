@@ -2,13 +2,14 @@
 Cell Image Processing Utilities
 
 This script provides utility functions for extracting cell images from multi-frame
-images and masks, and processing the cell images.
+images and masks, processing the cell images, and previewing mask overlays.
 
 Dependencies:
 
     numpy
     PIL
     tqdm
+    matplotlib
 
 Functions:
 
@@ -25,12 +26,17 @@ Functions:
     rearrange_dimensions(image, num_frames, multichannel, channel_info):
         Rearranges the dimensions of an image for downstream processing such
         that they are ordered as (channels, frames, height, width).
+    show_overlay(tif_to_analyze, masks, parameters, image_name, outlines):
+        Displays the original image without overlays on the left and with
+        overlays on the right in grayscale.
+        
 
 @author: Shani Zuniga
 '''
 from typing import Dict, List
 
 import numpy as np
+import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from tqdm.notebook import tqdm
 
@@ -179,3 +185,41 @@ def rearrange_dimensions(image, num_frames, multichannel, channel_info):
 				image = image[:, :, :, np.newaxis]
 				image = np.transpose(image, (2, 3, 0, 1))
 	return image
+
+def show_overlay(tif_to_analyze, masks, parameters, image_name, outlines, show_output=True):
+    """
+    Displays the original image without overlays on the left and with overlays on
+    the right in grayscale.
+
+    Parameters:
+        tif_to_analyze (numpy.ndarray): The image to display.
+        masks (numpy.ndarray): A binary mask of the regions of interest.
+        parameters (str): Additional parameters to display on the plot.
+        image_name (str): Name of image file to display
+        outlines (list): list of mask outlines
+        no_output (bool): boolean if to display resulting overlay (for testing)
+
+    Returns:
+        None
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+
+    ax1.imshow(tif_to_analyze, cmap='gray')
+    ax1.set_title(f"Sample Image: {image_name}")
+    ax1.axis('off')
+
+    ax2.imshow(tif_to_analyze)
+    ax2.set_title(parameters)
+    ax2.axis('off')
+
+    for i, o in enumerate(outlines):
+        y, x = np.nonzero(masks == (i + 1))
+        ymed = np.median(y)
+        xmed = np.median(x)
+        ax2.text(xmed, ymed, '%d' % (i), color='white')
+        ax2.plot(o[:, 0], o[:, 1], color='white')
+
+    if show_output:
+        plt.show()
+    else:
+        plt.close()

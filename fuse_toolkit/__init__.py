@@ -14,7 +14,8 @@ from .frame_by_frame import frame_by_frame # noqa: F401
 from .img_processing import (
     read_multiframe_tif, # noqa: F401
     extract_cells, # noqa: F401
-    rearrange_dimensions # noqa: F401
+    rearrange_dimensions, # noqa: F401
+    show_overlay # noqa: F401
 )
 from .lineage_management import Library # noqa: F401
 from .signal_derivation import get_signal # noqa: F401

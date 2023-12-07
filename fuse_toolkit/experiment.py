@@ -93,8 +93,51 @@ class Experiment:
                    frameInterval=data.get('frameInterval'),
                    frameToSegment=str(data.get('frameToSegment', 'all')),
                    expNote=data.get('expNote'))
-            
-            
+
+
+    def preview_segmentation(self, min_size=30, flow_threshold=0.4,
+                             mask_threshold=0.0, rescale=1,
+                             diameter=None, Custom_Model=False,
+                             model_path=None, Omnipose=False, output=True):
+        """
+        Preview segmentation on a randomly chosen image from the experiment directory.
+
+        Parameters:
+        min_size (int): Minimum size of cells to segment.
+        flow_threshold (float): Threshold for flow.
+        mask_threshold (float): Threshold for mask probability.
+        rescale (float): Rescale factor for the image.
+        diameter (int): Diameter of the cells. If None, a default value is used.
+        Custom_Model (bool): Flag to use a custom model.
+        model_path (str): Path to the custom model, if any.
+        Omnipose (bool): Flag to use the Omnipose model.
+        output (bool): Flag to control output display.
+
+        Returns:
+        None
+        """
+        model = self._initialize_model(Custom_Model, model_path, Omnipose)
+        files = self._find_image_files()
+
+        chosen_image_path = random.choice(files)
+        if output:
+            print(chosen_image_path)
+
+        image = self._prepare_sample_image(chosen_image_path)
+        masks, flows, styles, diams = model.eval(image,
+                                                 channels=[0, 0],
+                                                 flow_threshold=flow_threshold,
+                                                 cellprob_threshold=mask_threshold,
+                                                 min_size=min_size,
+                                                 diameter=diameter)
+        info = (f"min_size: {min_size}, flow: {flow_threshold}, "
+                f"mask: {mask_threshold}, rescale: {rescale}, diameter: {diameter}")
+        show_overlay(image, masks, info, os.path.basename(chosen_image_path),
+                     utils.outlines_list(masks), show_output=output)
+
+        del image, masks, flows, diams
+
+
     def _determine_folder(self, path):
         # Identifies folder of interest and returns path
         if os.path.isdir(path):
@@ -143,49 +186,6 @@ class Experiment:
     def _parse_frame_to_segment(self, frameToSegment):
         # Handles frameToSegment file format
         return int(frameToSegment) if frameToSegment != 'all' else frameToSegment
-
-        
-    def preview_segmentation(self, min_size=30, flow_threshold=0.4,
-                             mask_threshold=0.0, rescale=1,
-                             diameter=None, Custom_Model=False,
-                             model_path=None, Omnipose=False, output=True):
-        """
-        Preview segmentation on a randomly chosen image from the experiment directory.
-
-        Parameters:
-        min_size (int): Minimum size of cells to segment.
-        flow_threshold (float): Threshold for flow.
-        mask_threshold (float): Threshold for mask probability.
-        rescale (float): Rescale factor for the image.
-        diameter (int): Diameter of the cells. If None, a default value is used.
-        Custom_Model (bool): Flag to use a custom model.
-        model_path (str): Path to the custom model, if any.
-        Omnipose (bool): Flag to use the Omnipose model.
-        output (bool): Flag to control output display.
-
-        Returns:
-        None
-        """
-        model = self._initialize_model(Custom_Model, model_path, Omnipose)
-        files = self._find_image_files()
-
-        chosen_image_path = random.choice(files)
-        if output:
-            print(chosen_image_path)
-
-        image = self._prepare_sample_image(chosen_image_path)
-        masks, flows, styles, diams = model.eval(image,
-                                                 channels=[0, 0],
-                                                 flow_threshold=flow_threshold,
-                                                 cellprob_threshold=mask_threshold,
-                                                 min_size=min_size,
-                                                 diameter=diameter)
-        info = (f"min_size: {min_size}, flow: {flow_threshold}, "
-                f"mask: {mask_threshold}, rescale: {rescale}, diameter: {diameter}")
-        show_overlay(image, masks, info, os.path.basename(chosen_image_path),
-                     utils.outlines_list(masks), show_output=output)
-
-        del image, masks, flows, diams
 
     
     def _initialize_model(self, Custom_Model, model_path, Omnipose):

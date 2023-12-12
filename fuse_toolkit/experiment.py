@@ -4,8 +4,10 @@ import random
 from pathlib import Path
 import json
 import numpy as np
+import pandas as pd
 from cellpose import models, utils
-from skimage import io
+from skimage import io, measure
+from tqdm.autonotebook import tqdm
 from fuse_toolkit import rearrange_dimensions, show_overlay
 
 class Experiment:
@@ -28,9 +30,19 @@ class Experiment:
         expNote (str): Notes associated with the experiment.
         multiChannel (bool): Flag to indicate if there are multiple channels.
         folder (str): The folder path for the experiment.
+        df (pd.DataFrame): The experiment cell data-containing dataframe
 
     Methods:
-        from_json(cls, json_file_path): Class method to initialize an object from a JSON file.
+        from_json(cls, json_file_path):
+            Class method to initialize an object from a JSON file.
+        preview_segmentation(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0, 
+                             min_size=30,diameter=None, output=True):
+            Preview segmentation on a randomly chosen image from the experiment directory.
+        segment_cells(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0,
+                      min_size=30, diameter=None, export_df=True):
+            Performs cell segmentation on images and aggregates results in a DataFrame.
+        export_df(path=None):
+            Exports the class's DataFrame of cell properties to a CSV file.
     """
     
     def __init__(self, date, expID, path, parseID, separator, channelInfo, 
@@ -69,6 +81,8 @@ class Experiment:
         self.folder = self._determine_folder(path)
         self._create_experiment_directory()
 
+        # Check for existing segmentation CSV file and load it
+        self.df = self._load_existing_segmentation()\
 
     @classmethod
     def from_json(cls, json_file_path):
@@ -95,28 +109,23 @@ class Experiment:
                    expNote=data.get('expNote'))
 
 
-    def preview_segmentation(self, min_size=30, flow_threshold=0.4,
-                             mask_threshold=0.0, rescale=1,
-                             diameter=None, Custom_Model=False,
-                             model_path=None, Omnipose=False, output=True):
+    def preview_segmentation(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0, 
+                             min_size=30,diameter=None, output=True):
         """
         Preview segmentation on a randomly chosen image from the experiment directory.
 
         Parameters:
-        min_size (int): Minimum size of cells to segment.
-        flow_threshold (float): Threshold for flow.
-        mask_threshold (float): Threshold for mask probability.
-        rescale (float): Rescale factor for the image.
-        diameter (int): Diameter of the cells. If None, a default value is used.
-        Custom_Model (bool): Flag to use a custom model.
-        model_path (str): Path to the custom model, if any.
-        Omnipose (bool): Flag to use the Omnipose model.
-        output (bool): Flag to control output display.
+            model_type (str): The type of model for Cellpose to use. (default='cyto2')
+            flow_threshold (float): Threshold for flow.
+            mask_threshold (float): Threshold for mask probability.
+            min_size (int): Minimum size of cells to segment.
+            diameter (int): Diameter of the cells. If None, a default value is used.
+            output (bool): Flag to control output display.
 
         Returns:
-        None
+            Cellpose model used in sample segmentation
         """
-        model = self._initialize_model(Custom_Model, model_path, Omnipose)
+        model = self._initialize_model(model_type)
         files = self._find_image_files()
 
         chosen_image_path = random.choice(files)
@@ -131,13 +140,79 @@ class Experiment:
                                                  min_size=min_size,
                                                  diameter=diameter)
         info = (f"min_size: {min_size}, flow: {flow_threshold}, "
-                f"mask: {mask_threshold}, rescale: {rescale}, diameter: {diameter}")
+                f"mask: {mask_threshold}, diameter: {diameter}")
         show_overlay(image, masks, info, os.path.basename(chosen_image_path),
                      utils.outlines_list(masks), show_output=output)
 
         del image, masks, flows, diams
+        return model
 
 
+    def segment_cells(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0,
+                      min_size=30, diameter=None, export_df=True):
+        """
+        Performs cell segmentation on images and aggregates results in a DataFrame.
+
+        Args:
+            model_type (str): The type of model for Cellpose to use. (default='cyto2')
+            flow_threshold (float): Threshold for flow.
+            mask_threshold (float): Threshold for mask probability.
+            min_size (int): Minimum size of cells to segment.
+            diameter (int): Diameter of the cells. If None, a default value is used.
+            export_df (bool): If True, exports results to CSV
+
+        Returns:
+            pd.DataFrame: Resulting df of segmented cell properties.
+        """
+        model = self._initialize_model(model_type)
+        exp_df = pd.DataFrame()
+
+        if os.path.isdir(self.path):
+            files = sorted(glob.glob(os.path.join(self.path, '*.tif')))
+        elif os.path.splitext(self.path)[-1].lower() == '.tif':
+            files = [self.path]
+
+        for path in tqdm(files, desc='files completed'):
+            image = io.imread(path)
+            image = rearrange_dimensions(
+                image, self.numFrames, self.multiChannel, self.channelInfo)
+            img_to_seg = self._prep_for_seg(image)
+
+            masks, flows, styles, diams = model.eval(img_to_seg, channels=[0, 0],
+                                                     flow_threshold=flow_threshold,
+                                                     min_size=min_size, diameter=diameter)
+
+            self._export_masks(path, masks)
+
+            file_properties = self._extract_image_properties(path, image, masks)
+            del img_to_seg, flows, styles, diams, masks
+
+            file_df = pd.DataFrame(file_properties)
+            exp_df = pd.concat([exp_df, file_df], ignore_index=True)
+
+        self.df = exp_df
+        if export_df:
+            self.export_df()
+            exp_df.to_csv(os.path.join(
+                self.folder, f"{self.date}_{self.expID}", f"{self.date}_{self.expID}.csv"))
+        
+        return exp_df
+
+
+    def export_df(self, path=None):
+        """
+        Exports the class's DataFrame of cell properties to a CSV file.
+
+        Args:
+            path (str or None): Destination path for CSV; uses default if None.
+        """
+        if path is None:
+            self.df.to_csv(os.path.join(
+                self.folder, f"{self.date}_{self.expID}", f"{self.date}_{self.expID}.csv"))
+        else:
+            self.df.to_csv(path)
+        
+        
     def _determine_folder(self, path):
         # Identifies folder of interest and returns path
         if os.path.isdir(path):
@@ -154,6 +229,14 @@ class Experiment:
         Path(exp_folder).mkdir(parents=True, exist_ok=True)
         Path(os.path.join(exp_folder, "segmentations")).mkdir(parents=True, exist_ok=True)
         self._save_experiment_info(exp_folder)
+
+
+    def _load_existing_segmentation(self):
+        # Checks for an existing segmentation CSV file and loads it if present.
+        csv_path = os.path.join(self.folder, f"{self.date}_{self.expID}", f"{self.date}_{self.expID}.csv")
+        if os.path.isfile(csv_path):
+            return pd.read_csv(csv_path)
+        return None
 
 
     def _save_experiment_info(self, exp_folder):
@@ -188,13 +271,13 @@ class Experiment:
         return int(frameToSegment) if frameToSegment != 'all' else frameToSegment
 
     
-    def _initialize_model(self, Custom_Model, model_path, Omnipose):
+    def _initialize_model(self, model_type):
         # Initializes the segmentation model and returns it
-        if Custom_Model:
-            return models.CellposeModel(gpu='use_GPU', pretrained_model=model_path)
-        elif Omnipose:
-            return models.CellposeModel(gpu='use_GPU', model_type='cyto2_omni')
-        return models.Cellpose(gpu='use_GPU', model_type='cyto2')
+        # if Custom_Model:
+        #     return models.CellposeModel(gpu='use_GPU', pretrained_model=model_path)
+        # elif Omnipose:
+        #     return models.CellposeModel(gpu='use_GPU', model_type='cyto2_omni')
+        return models.Cellpose(gpu='use_GPU', model_type=model_type)
     
     
     def _find_image_files(self):
@@ -212,3 +295,63 @@ class Experiment:
         image = rearrange_dimensions(image, self.numFrames, self.multiChannel, self.channelInfo)
         image = image[self.channelInfo.index(self.channelToSegment)][0]
         return np.squeeze(image)
+    
+    
+    def _prep_for_seg(self, image):
+        # Extracts a single channel and/or frame from a multi-dimensional image.
+        if image.ndim == 3:
+            image = image
+        else:
+            image = image[self.channelInfo.index(self.channelToSegment)]
+        if self.frameToSegment != 'all':
+            image = [image[self.frameToSegment]]
+        else:
+            image = [i for i in image]
+        return image
+    
+    
+    def _export_masks(self, img_path, masks):
+        # Exports cell masks to .tif files
+        name, ftype = os.path.basename(img_path).split(".")
+        if len(masks) == 1:
+            io.imsave(os.path.join(self.folder, f"{self.date}_{self.expID}", 
+                                   "segmentations", f"{name}_seg.{ftype}"), masks[0])        
+        else:
+            masks_stack = np.stack(masks)
+            io.imsave(os.path.join(self.folder, f"{self.date}_{self.expID}", 
+                                   "segmentations", f"{name}_seg.{ftype}"), masks_stack)
+            del masks_stack
+
+        
+    def _extract_image_properties(self, img_path, image, masks):
+        # Generates list of image and roi properties for the give file/image
+        parsed_list = img_path[img_path.rfind(os.path.sep)+1:-4].split(sep=self.separator)
+        parsedID = {ID: str(parsed_list[i]) for i, ID in enumerate(self.parseID)}
+        
+        file_properties=[]
+        for i, channel in enumerate(image):
+            channel_prop=[]
+            for j, frame in enumerate(channel):
+                if len(masks) == 1:
+                    channel_prop.append(measure.regionprops(masks[0], frame))
+                else:
+                    channel_prop.append(measure.regionprops(masks[j], frame))
+            file_properties.append(channel_prop)
+
+        image_props = []
+        for i, channel_properties in enumerate(file_properties):
+            for j, frame_properties in enumerate(channel_properties):
+                for k, roi_properties in enumerate(frame_properties):
+                    roi_prop_dict = {}
+                    roi_prop_dict['Intensity'] = roi_properties.mean_intensity
+                    roi_prop_dict['Centroid'] = roi_properties.centroid
+                    roi_prop_dict['BB'] = roi_properties.bbox
+                    roi_prop_dict['ROI'] = k
+                    roi_prop_dict['Frame'] = j
+                    roi_prop_dict['Time'] = j*self.frameInterval
+                    roi_prop_dict['Channel'] = self.channelInfo[i]
+                    roi_prop_dict.update(parsedID)
+                    image_props.append(roi_prop_dict)
+        return image_props
+    
+    

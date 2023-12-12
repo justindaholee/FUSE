@@ -26,7 +26,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from tqdm.notebook import tqdm
+from tqdm.autonotebook import tqdm
 from scipy.spatial.distance import cdist
 
 from .lineage_management import Library

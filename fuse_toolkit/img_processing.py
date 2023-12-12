@@ -38,7 +38,7 @@ from typing import Dict, List
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
-from tqdm.notebook import tqdm
+from tqdm.autonotebook import tqdm
 
 
 def read_multiframe_tif(filename: str,

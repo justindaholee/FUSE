@@ -1,7 +1,7 @@
 {
     "date": "0000-00-00",
     "expID": "TestExp",
-    "path": "tests\\test_resources\\image.tif",
+    "path": "tests\\test_resources\\Tester_01.tif",
     "parseID": [
         "Name",
         "Well"
@@ -14,7 +14,7 @@
     ],
     "channelToSegment": "RFP",
     "numFrames": 90,
-    "frameToSegment": "all",
+    "frameToSegment": 0,
     "frameInterval": 1,
     "expNote": "test note"
 }

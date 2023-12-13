@@ -5,7 +5,7 @@ with open('README.md', 'r') as readme_file:
   
 setup(
     name='fuse_toolkit',
-    version='0.1.0b8',
+    version='0.1.0b9',
     description='FUSE toolkit supports fluorescent cell image alignment and analysis.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -25,7 +25,9 @@ setup(
         'scipy',
         'cellpose',
         'matlotlib',
-        'skimage'
+        'skimage',
+        'sklearn',
+        'tensorflow',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

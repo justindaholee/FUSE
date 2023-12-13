@@ -14,7 +14,7 @@
     ],
     "channelToSegment": "RFP",
     "numFrames": 90,
-    "frameToSegment": 0,
+    "frameToSegment": "all",
     "frameInterval": 1,
     "expNote": "test note"
 }

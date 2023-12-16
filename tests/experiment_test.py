@@ -2,59 +2,60 @@ import os
 import glob
 import shutil
 import pytest
+import warnings
 import json
 import pandas as pd
 from fuse_toolkit import Experiment
 
 class TestExperimentClass:
-    
     @pytest.fixture
     def setup(self):
         # Setup code
         print('Setting up...')
         self.test_folder = os.path.join('tests', 'test_resources', "")
         self.date = '2023-12-31'
-        self.expID = 'TestExp'
+        self.exp_ID = 'TestExp'
         self.path = os.path.join('tests', 'test_resources', 'Tester_01.tif')
-        self.parseID = 'Name_Well'
+        self.parse_ID = 'Well_Trial'
         self.separator = '_'
-        self.channelInfo = 'RFP_GFP'
-        self.channelToSegment = 'RFP'
-        self.numFrames = 90
-        self.frameInterval = 1
-        self.frameToSegment = 0
-        self.expNote = 'test note'
+        self.channel_info = 'RFP_GFP'
+        self.channel_to_seg = 'RFP'
+        self.num_frames = 90
+        self.frame_interval = 1
+        self.frame_to_seg = 0
+        self.exp_note = 'test note'
         self.test_folder = os.path.join('tests', 'test_resources',
-                                        self.date + "_" + self.expID)
+                                        self.date + "_" + self.exp_ID)
         self.json_date = '0000-00-00'
         self.test_json_path = os.path.join('tests', 'test_resources',
-                                           self.json_date + "_" + self.expID,
+                                           self.json_date + "_" + self.exp_ID,
                                            'info_exp.json')
         yield  
         if os.path.isdir(self.test_folder):
             shutil.rmtree(self.test_folder)
 
-        
+
     def test_initialization(self, setup):
         # Test if the Experiment object is initialized correctly
-        experiment = Experiment(self.date, self.expID, self.path, self.parseID,
-                                self.separator, self.channelInfo, self.channelToSegment,
-                                self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.expNote)
+        experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
+                                self.channel_info, self.channel_to_seg, self.num_frames,
+                                self.frame_interval, self.frame_to_seg, self.exp_note)
         assert experiment.date == self.date
-        assert experiment.expID == self.expID
+        assert experiment.exp_ID == self.exp_ID
         assert experiment.path == self.path
-        assert experiment.parseID == self.parseID.split(sep=self.separator)
+        assert experiment.parse_ID == self.parse_ID.split(sep=self.separator)
         assert experiment.separator == self.separator
-        assert experiment.channelInfo == self.channelInfo.split(sep=self.separator)
-        assert experiment.channelToSegment == self.channelToSegment
-        assert experiment.numFrames == self.numFrames
-        assert experiment.frameInterval == self.frameInterval
-        assert experiment.frameToSegment == self.frameToSegment
-        assert experiment.expNote == self.expNote
-        assert hasattr(experiment, 'folder')
+        assert experiment.channel_info == self.channel_info.split(sep=self.separator)
+        assert experiment.channel_to_seg == self.channel_to_seg
+        assert experiment.num_frames == self.num_frames
+        assert experiment.frame_interval == self.frame_interval
+        assert experiment.frame_to_seg == self.frame_to_seg
+        assert experiment.exp_note == self.exp_note
+        assert hasattr(experiment, 'img_folder')
+        assert hasattr(experiment, 'exp_folder')
         assert hasattr(experiment, 'df')
-        if os.path.exists(os.path.join(experiment.folder, f"{experiment.date}_{experiment.expID}", f"{experiment.date}_{experiment.expID}.csv")):
+        if os.path.exists(os.path.join(
+            experiment.exp_folder, f"{experiment.date}_{experiment.exp_ID}.csv")):
             assert isinstance(experiment.df, pd.DataFrame)
         else:
             assert experiment.df is None
@@ -62,32 +63,38 @@ class TestExperimentClass:
 
     def test_folder_creation(self, setup):
         # Test if the folder and its subdirectories are created correctly
-        experiment = Experiment(self.date, self.expID, self.path, self.parseID,
-                                self.separator, self.channelInfo, self.channelToSegment,
-                                self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.expNote)
+        experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
+                                self.separator, self.channel_info, self.channel_to_seg,
+                                self.num_frames, self.frame_interval, self.frame_to_seg,
+                                self.exp_note)
 
         # Main experiment folder
-        exp_folder_path = os.path.join(experiment.folder, self.date + '_' + self.expID)
-        assert os.path.exists(exp_folder_path) and os.path.isdir(exp_folder_path), "Experiment folder not created correctly."
+        assert os.path.exists(experiment.exp_folder) and os.path.isdir(
+            experiment.exp_folder), "Experiment folder not created correctly."
 
         # Segmentations subfolder
-        segmentations_folder_path = os.path.join(exp_folder_path, 'segmentations')
-        assert os.path.exists(segmentations_folder_path) and os.path.isdir(segmentations_folder_path), "Segmentations subfolder not created correctly."
+        segmentations_folder_path = os.path.join(experiment.exp_folder, 'segmentations')
+        assert os.path.exists(segmentations_folder_path) and os.path.isdir(
+            segmentations_folder_path), "Segmentations subfolder not created correctly."
+
+        # Labeling tool subfolder
+        labeling_folder_path = os.path.join(experiment.exp_folder, 'labeling_tools')
+        assert os.path.exists(labeling_folder_path) and os.path.isdir(
+            labeling_folder_path), "Labeling tool subfolder not created correctly."
 
         # Info file
-        info_file_path = os.path.join(exp_folder_path, 'info_exp.json')
+        info_file_path = os.path.join(experiment.exp_folder, 'info_exp.json')
         assert os.path.exists(info_file_path), "Experiment info file not created correctly."
 
 
     def test_info_file_creation(self, setup):
         # Test if the info_exp.json file is created correctly
-        experiment = Experiment(self.date, self.expID, self.path, self.parseID,
-                                self.separator, self.channelInfo, self.channelToSegment,
-                                self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.expNote)
+        experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
+                                self.separator, self.channel_info, self.channel_to_seg,
+                                self.num_frames, self.frame_interval, self.frame_to_seg,
+                                self.exp_note)
         
-        info_file_path = os.path.join(experiment.folder, self.date + '_' + self.expID, 'info_exp.json')
+        info_file_path = os.path.join(experiment.exp_folder, 'info_exp.json')
 
         # Check if the file exists
         assert os.path.exists(info_file_path)
@@ -96,22 +103,40 @@ class TestExperimentClass:
         with open(info_file_path, 'r') as f:
             info_data = json.load(f)
 
-        expected_parseID = self.parseID.split(sep=self.separator)
-        expected_channelInfo = self.channelInfo.split(sep=self.separator)
-        expected_frameToSegment = int(self.frameToSegment) if self.frameToSegment != 'all' else self.frameToSegment
+        expected_parse_ID = self.parse_ID.split(sep=self.separator)
+        expected_channel_info = self.channel_info.split(sep=self.separator)
+        expected_frame_to_seg = int(self.frame_to_seg) if self.frame_to_seg != 'all' else self.frame_to_seg
 
         assert info_data['date'] == self.date
-        assert info_data['expID'] == self.expID
+        assert info_data['exp_ID'] == self.exp_ID
         assert info_data['path'] == self.path
-        assert info_data['parseID'] == expected_parseID
+        assert info_data['parse_ID'] == expected_parse_ID
         assert info_data['separator'] == self.separator
-        assert info_data['multiChannel'] == (len(expected_channelInfo) > 1)
-        assert info_data['channelInfo'] == expected_channelInfo
-        assert info_data['channelToSegment'] == self.channelToSegment
-        assert info_data['numFrames'] == self.numFrames
-        assert info_data['frameInterval'] == self.frameInterval
-        assert info_data['frameToSegment'] == expected_frameToSegment
-        assert info_data['expNote'] == self.expNote
+        assert info_data['multichannel'] == (len(expected_channel_info) > 1)
+        assert info_data['channel_info'] == expected_channel_info
+        assert info_data['channel_to_seg'] == self.channel_to_seg
+        assert info_data['num_frames'] == self.num_frames
+        assert info_data['frame_interval'] == self.frame_interval
+        assert info_data['frame_to_seg'] == expected_frame_to_seg
+        assert info_data['exp_note'] == self.exp_note
+
+
+    def test_modifying_json_after_init(self, setup):
+       # Test JSON update with warnings for changed experiment parameters.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
+                   self.channel_info, self.channel_to_seg, self.num_frames,
+                   self.frame_interval, self.frame_to_seg, self.exp_note)
+            modified = Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
+                self.channel_info, self.channel_to_seg, self.num_frames + 10, self.frame_interval,
+                self.frame_to_seg, "This is a secondary note.")
+            assert len(w) == 1
+            assert "num_frames" in str(w[-1].message)
+        with open(os.path.join(modified.exp_folder, 'info_exp.json'), 'r') as file:
+            data = json.load(file)
+            assert data['num_frames'] == self.num_frames + 10
+            assert data['exp_note'].endswith("This is a secondary note.")
 
 
     def test_from_json(self, setup):
@@ -119,35 +144,40 @@ class TestExperimentClass:
         experiment = Experiment.from_json(self.test_json_path)
 
         assert experiment.date == self.json_date
-        assert experiment.expID == self.expID
+        assert experiment.exp_ID == self.exp_ID
         assert experiment.path == self.path
-        assert experiment.parseID == self.parseID.split(self.separator)
+        assert experiment.parse_ID == self.parse_ID.split(self.separator)
         assert experiment.separator == self.separator
-        assert experiment.channelInfo == self.channelInfo.split(self.separator)
-        assert experiment.channelToSegment == self.channelToSegment
-        assert experiment.numFrames == self.numFrames
-        assert experiment.frameInterval == self.frameInterval
-        assert experiment.frameToSegment == self.frameToSegment
-        assert experiment.expNote == self.expNote
-        assert experiment.multiChannel == (len(self.channelInfo.split(self.separator)) > 1)
+        assert experiment.channel_info == self.channel_info.split(self.separator)
+        assert experiment.channel_to_seg == self.channel_to_seg
+        assert experiment.num_frames == self.num_frames
+        assert experiment.frame_interval == self.frame_interval
+        assert experiment.frame_to_seg == 'all'
+        assert experiment.exp_note == self.exp_note
+        assert experiment.multichannel == (len(self.channel_info.split(self.separator)) > 1)
+        if os.path.exists(os.path.join(experiment.exp_folder,
+                                       f"{experiment.date}_{experiment.exp_ID}.csv")):
+            assert isinstance(experiment.df, pd.DataFrame)
+        else:
+            assert experiment.df() is None
 
      
     def test_preview_segmentation(self, setup):
         # Test if preview_segmentation() without errors
-        experiment = Experiment(self.date, self.expID, self.path, self.parseID,
-                                self.separator, self.channelInfo, self.channelToSegment,
-                                self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.expNote)
+        experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
+                                self.separator, self.channel_info, self.channel_to_seg,
+                                self.num_frames, self.frame_interval, self.frame_to_seg,
+                                self.exp_note)
 
         experiment.preview_segmentation(output=False)
 
 
     def test_cell_segmentation(self, setup):
         # Tests that cell_segmentation() runs without errors and validates results
-        experiment = Experiment(self.date, self.expID, self.path, self.parseID,
-                                self.separator, self.channelInfo, self.channelToSegment,
-                                self.numFrames, self.frameInterval, self.frameToSegment,
-                                self.expNote)
+        experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
+                                self.separator, self.channel_info, self.channel_to_seg,
+                                self.num_frames, self.frame_interval, self.frame_to_seg,
+                                self.exp_note)
 
         result_df = experiment.segment_cells()
 
@@ -163,6 +193,17 @@ class TestExperimentClass:
 
         for input_file in input_files:
             base_name = os.path.basename(input_file).split('.')[0]
-            expected_seg_file = os.path.join(experiment.folder, f"{experiment.date}_{experiment.expID}", 
+            expected_seg_file = os.path.join(experiment.img_folder,
+                                             f"{experiment.date}_{experiment.exp_ID}", 
                                              "segmentations", f"{base_name}_seg.tif")
             assert os.path.isfile(expected_seg_file), f"Segmentation file not found for {base_name}"
+
+
+    def test_cell_labeling(self, setup):
+        # Tests that the labeling function runs without errors
+        experiment = Experiment.from_json(self.test_json_path)
+        labeled_df = experiment.label_cells(to_label='ALL', search_radius=100, 
+                                            min_connectivity=100, iou_weight=0.6, 
+                                            visual_weight=0.4, must_overlap=True, 
+                                            export_df=True)
+        assert 'Label' in labeled_df.columns

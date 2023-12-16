@@ -207,3 +207,17 @@ class TestExperimentClass:
                                             visual_weight=0.4, must_overlap=True, 
                                             export_df=True)
         assert 'Label' in labeled_df.columns
+        
+    def test_signal_derivation(self, setup):
+        # Tests that the signal derivation function runs without errors
+        experiment = Experiment.from_json(self.test_json_path)
+        signal_name = 'deltaFoverF0'
+        signal_params = {'n_frames': 5, 'channel': 'GFP'}
+        signal_df = experiment.get_signal(signal_name, signal_params, export_df=False)
+        assert signal_name in signal_df.columns
+        
+        signal_name = 'ratiometric'
+        signal_params = {'channel_1': 'RFP', 'channel_2': 'GFP'}
+        signal_df = experiment.get_signal(signal_name, signal_params, export_df=False)
+        assert signal_name in signal_df.columns
+        

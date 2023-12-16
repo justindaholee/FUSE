@@ -328,29 +328,40 @@ class Experiment:
         return self.__df
 
 
-    def get_signal(self, signal_info: dict, export_df=True):
+    def get_signal(self, signal_name, signal_params: dict, output_name=None, export_df=True):
         '''
         Calculates the specified signal for each cell in a dataframe.
         Assumes dataframe is output by FUSE engine, generates new column
-        for derived signal.The updated df is returned by the function and
+        for derived signal. The updated df is returned by the function and
         optionally saved in the experiment directory.
-        
-        Supported signal types and required parameters in `signal_info`:
-            - 'deltaFoverFo': Requires 'n_frames', number of frames for baseline.
-            - 'ratiometric(multichannel only)': Requires 'channel_1', 'channel_2',
-                names of the channels for ratio such that: 'channel_1'/'channel_2'
+        Supported signal types:
+            - deltaFoverF0: Measures changes in fluorescence relative to a baseline
+            - ratiometric (multichannel only): Intensity ratio between two channels 
 
         Args:
-            signal_info (Dict[str, str]): A dictionary containing the signal information:
-              - 'type': a supported signal type, as seen above (case sensitive)
-              - 'name': column name of the output signal in the results df
-              - any other parameters specific to the signal type as seen above
-            export_df (bool): If True, exports results to CSV
+            signal_name (str): Name of the desired signal to derive (must match a supported
+                signal type, case sensitive)
+              - "deltaFoverF0"
+              - "ratiometric"
+            
+            signal_params (dict): A dictionary containing the signal parameters,
+                contents will depend on the selected signal type:
+              - "deltaFoverF0": 
+                    - "n_frames" (int): number of frames for baseline (from 0)
+                    - "channel" (str): channel to use fluorescent change (match experiment df)
+              - "ratiometric": Resulting ratio will be 'channel_1'/'channel_2'
+                    - "channel_1" (str): Name of 1st channel (match experiment df)
+                    - "channel_2" (str): Name of 2nd channel (math experiment df)
+            
+            output_name (str): Name of the new column in the df containing the signal
+            export_df (bool): If True, exports results to CSV file (default=True)
         Returns:
             pd.DataFrame: A dataframe with new column for fluorescent change.
         '''
-        func = self._validate_and_fetch_signal(signal_info)
-        signal_list = self._get_column_as_list(column_name=signal_info['name'])
+        func = self._validate_and_fetch_signal(signal_name, signal_params)
+        if not output_name:
+            output_name = signal_name
+        signal_list = self._get_column_as_list(output_name)
 
         for filename in self._find_image_files(filename_only=True):
             file_df, file_filter = self._generate_file_df_and_filter(filename)
@@ -359,10 +370,10 @@ class Experiment:
                     f"Skipping signal generation for {filename} because cell labeling is not found."
                 )
                 continue
-            new_signal = func(signal_list, self.__df, file_filter, self.__parse_ID, 
-                              signal_info['name'], **signal_info)
+            new_signal = func(signal=signal_list, df=self.__df, file_filter=file_filter,
+                              parse_ID=self.__parse_ID, column_name=output_name, **signal_params)
             signal_list = list(np.where(file_filter, new_signal, signal_list))
-        self.__df[signal_info['name']] = pd.Series(signal_list)
+        self.__df[output_name] = pd.Series(signal_list)
         if export_df:
             self.export_df()
         return self.__df
@@ -693,21 +704,20 @@ class Experiment:
         return list(np.where(file_filter, new_labels, label_list))
 
 
-    def _validate_and_fetch_signal(self, signal_info):
+    def _validate_and_fetch_signal(self, signal_name, parameters):
         ''' Retrieves the signal function based on type and verifies signal_info'''
         required_params = {
-            'deltaFoverFo': ['name', 'n_frames'],
-            'ratiometric (multichannel only)': ['name', 'channel_1', 'channel_2']}
+            'deltaFoverF0': ['n_frames', 'channel'],
+            'ratiometric': ['channel_1', 'channel_2']}
         signal_processing_functions = {
-            'deltaFoverFo': signal_derivation.deltaF,
-            'ratiometric (multichannel only)': signal_derivation.ratiometric}
+            'deltaFoverF0': signal_derivation.deltaF,
+            'ratiometric': signal_derivation.ratiometric}
 
-        signal_type = signal_info.get('type')
-        if signal_type not in signal_processing_functions:
-            raise ValueError(f"Unsupported signal type: {signal_type}")
-        for param in required_params.get(signal_type, []):
-            if param not in signal_info:
-                raise ValueError(f"Missing required parameter for {signal_type}: {param}")
-        return signal_processing_functions[signal_type]
+        if signal_name not in signal_processing_functions:
+            raise ValueError(f"Unsupported signal type: {signal_name}")
+        for param in required_params.get(signal_name, []):
+            if param not in parameters:
+                raise ValueError(f"Missing required parameter for {signal_name}: {param}")
+        return signal_processing_functions[signal_name]
 
 

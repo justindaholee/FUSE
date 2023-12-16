@@ -1,20 +1,20 @@
 {
     "date": "0000-00-00",
-    "expID": "TestExp",
+    "exp_ID": "TestExp",
     "path": "tests\\test_resources\\Tester_01.tif",
-    "parseID": [
-        "Name",
-        "Well"
+    "parse_ID": [
+        "Well",
+        "Trial"
     ],
     "separator": "_",
-    "multiChannel": true,
-    "channelInfo": [
+    "multichannel": true,
+    "channel_info": [
         "RFP",
         "GFP"
     ],
-    "channelToSegment": "RFP",
-    "numFrames": 90,
-    "frameToSegment": "all",
-    "frameInterval": 1,
-    "expNote": "test note"
+    "channel_to_seg": "RFP",
+    "num_frames": 90,
+    "frame_to_seg": "all",
+    "frame_interval": 1,
+    "exp_note": "test note"
 }

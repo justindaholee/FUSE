@@ -1,8 +1,13 @@
 '''
 Functions for Deriving Signals
 
-This script provides utility functions for deriving fluorescent signals from
-cell images, after they have been processed by FUSE.
+This script provides specific signal functions for deriving fluorescent signals from
+cell images, after they have been processed by FUSE. 
+Supported signal types and required parameters:
+    - 'deltaFoverFo': Requires 'n_frames', number of frames for baseline.
+    - 'ratiometric(multichannel only)': Requires 'channel_1', 'channel_2',
+        names of the channels for ratio such that: 'channel_1'/'channel_2'
+Accessed by the Experiment.get_signal() function.
 
 Dependencies:
 
@@ -21,11 +26,6 @@ Functions:
                  ) -> List[float]:
         Calculates the ratiometric signal for each cell in a dataframe
         for a specific file and updates the signal list.
-    get_signal(df: pd.DataFrame, file_names: List[str], naming: List[str],
-                separator: str, signal_info: dict) -> pd.DataFrame:
-        Calculates the specified signal for each cell in a dataframe.
-        Assumes dataframe is output by FUSE engine, generates new column
-        for derived signal.
     
 @author: Shani Zuniga
 '''
@@ -34,7 +34,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-def _deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
            naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
            n_frames: int =  5) -> List[float]:
     '''
@@ -78,7 +78,7 @@ def _deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
         updated_signal = list(np.where(channel_filter, new_deltaF, signal))
     return updated_signal
 
-def _ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
+def ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
                 naming: List[str], column_name: str, channel_1: str, channel_2: str
                 ) -> List[float]:
     '''
@@ -123,59 +123,3 @@ def _ratiometric(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
     new_ratios = new_ratios.tolist()
     updated_signal = list(np.where(file_filter, new_ratios, signal))
     return updated_signal
-    
-def get_signal(df: pd.DataFrame, file_names: List[str], naming: List[str], 
-               separator: str, signal_info: dict) -> pd.DataFrame:
-    '''
-    Calculates the specified signal for each cell in a dataframe.
-    Assumes dataframe is output by FUSE engine, generates new column
-    for derived signal.
-    
-    Args
-        df (pd.DataFrame): A dataframe containing the cell images and metadata.
-        file_names (List[str]): A list of file_names to use for calculating the change.
-        naming (List[str]): A list of column names, file naming convention.
-        separator (str): The separator used in the file naming convention.
-        signal_info (dict): A dictionary containing the signal information.
-    
-    Returns:
-        pd.DataFrame: A dataframe with new column for fluorescent change.
-    '''
-    # Check for existing deltaFoverFo and initialize deltaF array
-    if signal_info['name'] in df.columns:
-        signal_array = df.pop(signal_info['name']).values
-        signal_array = signal_array.tolist()
-    else:
-        signal_array = [None] * len(df)
-
-    # Iterate over imgs to plot
-    for file_name in file_names:
-        # Generate file_df and file_filter to keep relevant info for img
-        file_df = df.copy()
-        file_filter = [True] * len(df)
-        parsed_name = file_name.split(".")[0].split(separator)
-        for column, value in zip(naming, parsed_name):
-            file_df = file_df[file_df[column].astype(str) == value]
-            if column in df.columns:
-                col_values = df[column].astype(str)
-                file_filter = file_filter & (col_values == value)
-
-        # Skip iteration if no labels for image
-        if file_df['Label'].isna().all():
-            continue
-        
-        # Update signal array for file
-        if signal_info['type'] == 'deltaFoverFo':
-            new_signal = _deltaF(signal_array, df, file_filter, naming,
-                                 signal_info['name'], signal_info['n_frames'])
-        elif signal_info['type'] == 'ratiometric (multichannel only)':
-            new_signal = _ratiometric(signal_array, df, file_filter, naming,
-                                      signal_info['name'], signal_info['channel_1'],
-                                      signal_info['channel_2'])
-
-        signal_array = list(np.where(file_filter, new_signal, signal_array))
-    
-    # Add signal array as column of original df
-    signal_series = pd.Series(signal_array)
-    df[signal_info['name']] = signal_series
-    return df

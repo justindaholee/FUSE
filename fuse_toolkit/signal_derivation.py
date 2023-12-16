@@ -4,7 +4,7 @@ Functions for Deriving Signals
 This script provides specific signal functions for deriving fluorescent signals from
 cell images, after they have been processed by FUSE. 
 Supported signal types and required parameters:
-    - 'deltaFoverFo': Requires 'n_frames', number of frames for baseline.
+    - 'deltaFoverF0': Requires 'n_frames', number of frames for baseline.
     - 'ratiometric(multichannel only)': Requires 'channel_1', 'channel_2',
         names of the channels for ratio such that: 'channel_1'/'channel_2'
 Accessed by the Experiment.get_signal() function.
@@ -17,7 +17,7 @@ Dependencies:
 Functions:
 
     _deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-            naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
+            naming: List[str], column_name: str = 'deltaFoverF0', channel: str = None,
             n_frames: int =  5) -> List[float]:
         Calculates the deltaF/F for each cell in a dataframe for a specific file and
         updates the signal list.
@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-           naming: List[str], column_name: str = 'deltaFoverFo', channel: str = None,
+           naming: List[str], column_name: str = 'deltaFoverF0', channel: str = None,
            n_frames: int =  5) -> List[float]:
     '''
     Calculates the deltaF/F for each cell in a dataframe for a specific file and updates
@@ -70,7 +70,7 @@ def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
             delta_list.append(temp_df)
         file_df = pd.concat(delta_list, ignore_index=True)
 
-        # Merge deltaFoverFo to signal_array
+        # Merge deltaFoverF0 to signal_array
         file_df = file_df[[column_name, 'ROI', 'Frame', 'Channel'] + naming].copy()
         df = df.merge(file_df, on=naming + ['ROI', 'Frame', 'Channel'], how='left')
         new_deltaF = df.pop(column_name).values

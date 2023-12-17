@@ -67,7 +67,8 @@ class Library:
         self.lineages = []
         for cell in np.unique(init_mask):
             if cell != 0:
-                cell_info = df[(df['Frame']==0) & (df['ROI']==(cell-1))].reset_index()
+                cell_info = df[
+                    (df['Frame']==0) & (df['ROI']==(cell-1))].reset_index()
                 x = cell_info.loc[0, 'x']
                 y = cell_info.loc[0, 'y']
                 new_cell = Cell(cell, cell, 0, x, y)

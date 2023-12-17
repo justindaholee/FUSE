@@ -607,13 +607,8 @@ class Experiment:
     def _generate_labeling_df(self, df):
         """Generates and returns df with only labeling-relevant data"""
         labeling_df = df[["Frame", "ROI"]].copy()
-        centroids = (
-            df["Centroid"]
-            .str.strip("()")
-            .str.split(", ", expand=True)
-            .astype(float)
-        )
-        labeling_df[["x", "y"]] = centroids
+        labeling_df["x"] = [coord[0] for coord in df['Centroid']]
+        labeling_df["y"] = [coord[1] for coord in df['Centroid']]
         return labeling_df
     
     

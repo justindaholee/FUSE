@@ -213,8 +213,7 @@ class Library:
             Remove lineages that have been tracked for fewer frames than 
             min_percent/100*total_frames.
 
-            Parameters:
-            
+            Args:
                 min_percent: float
                     Minimum percentage of total frames that a lineage must 
                     be tracked for in order to be kept.
@@ -222,7 +221,6 @@ class Library:
                     Total number of frames in the video.
 
             Returns:
-
                 None
             """
             min_frames = min_percent / 100 * total_frames

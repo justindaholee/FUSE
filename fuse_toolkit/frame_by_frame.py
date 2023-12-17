@@ -26,7 +26,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from tqdm.notebook import tqdm
+from tqdm.autonotebook import tqdm
 from scipy.spatial.distance import cdist
 
 from .lineage_management import Library
@@ -42,17 +42,17 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
     previously identified cells in the lineage library.
 
     Args:
-    - lib: A lineage library object.
-    - masks: List of numpy arrays with binary masks for each frame.
-    - df: A pandas DataFrame containing information about each cell in each frame.
-    - cell_vectors: Dictionary with feature vectors for each cell.
-    - search_radius: Float value for max distance between similar cells.
-    - connectivity: Integer value for minimum frames per lineage.
-    - iou_weight: float value to scale iou score by; default=0.6
-    - visual_weight: float value to scale visual score by; default=0.4
-    - must_overlap: boolean kconsider cells across frames only if they overlap
+        lib: A lineage library object.
+        masks: List of numpy arrays with binary masks for each frame.
+        df: A pandas DataFrame containing information about each cell in each frame.
+        cell_vectors: Dictionary with feature vectors for each cell.
+        search_radius: Float value for max distance between similar cells.
+        connectivity: Integer value for minimum frames per lineage.
+        iou_weight: float value to scale iou score by; default=0.6
+        visual_weight: float value to scale visual score by; default=0.4
+        must_overlap: boolean kconsider cells across frames only if they overlap
     Returns:
-    - A lineage library object containing identified cells and their lineages.
+        A lineage library object containing identified cells and their lineages.
     """
     for i, mask in tqdm(enumerate(masks[1:]), total=len(masks)-1,
                     desc="Processing Frames", unit="frame"):

@@ -2,13 +2,14 @@
 Cell Image Processing Utilities
 
 This script provides utility functions for extracting cell images from multi-frame
-images and masks, and processing the cell images.
+images and masks, processing the cell images, and previewing mask overlays.
 
 Dependencies:
 
     numpy
     PIL
     tqdm
+    matplotlib
 
 Functions:
 
@@ -16,7 +17,7 @@ Functions:
                         channel_selection: List[int]=[1]) -> list[np.ndarray]:
         Reads a multi-frame tif file and returns a list of ndarrays of frames
         for the selected channels.
-    process_image(img_data, size=(28, 28)) -> np.ndarray:
+    _process_image(img_data, size=(28, 28)) -> np.ndarray:
         Rescale, convert to grayscale, pad, and normalize an input image.
     extract_cells(images_path: str, masks_path: str,
                 channel: str) -> Dict[str, np.ndarray]:
@@ -25,14 +26,19 @@ Functions:
     rearrange_dimensions(image, num_frames, multichannel, channel_info):
         Rearranges the dimensions of an image for downstream processing such
         that they are ordered as (channels, frames, height, width).
+    show_overlay(img, masks, parameters, image_name, outlines):
+        Displays the original image without overlays on the left and with
+        overlays on the right in grayscale.
+        
 
 @author: Shani Zuniga
 '''
 from typing import Dict, List
 
 import numpy as np
+import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
-from tqdm.notebook import tqdm
+from tqdm.autonotebook import tqdm
 
 
 def read_multiframe_tif(filename: str,
@@ -67,7 +73,7 @@ def read_multiframe_tif(filename: str,
             selected_frames.extend(np.array(channel_frames))
     return selected_frames
 
-def process_image(img_data, size=(28, 28)) -> np.ndarray:
+def _process_image(img_data, size=(28, 28)) -> np.ndarray:
     """
     Rescale, convert to grayscale, pad, and normalize an input image.
 
@@ -132,7 +138,7 @@ def extract_cells(images_path: str, masks_path: str,
             cell_mask = (mask_frame == cell_id)
             clipped_image = image_frame * cell_mask
             cell_image = clipped_image[x_min:x_max+1, y_min:y_max+1]
-            processed_img = process_image(cell_image)
+            processed_img = _process_image(cell_image)
 
             if processed_img is not None:
                 cell_dict[f"frame_{frame_idx}_cell_{cell_id}"] = processed_img
@@ -179,3 +185,41 @@ def rearrange_dimensions(image, num_frames, multichannel, channel_info):
 				image = image[:, :, :, np.newaxis]
 				image = np.transpose(image, (2, 3, 0, 1))
 	return image
+
+def show_overlay(img, masks, parameters, image_name, outlines, show_output=True):
+    """
+    Displays the original image without overlays on the left and with overlays on
+    the right in grayscale.
+
+    Args:
+        img (numpy.ndarray): The image to display.
+        masks (numpy.ndarray): A binary mask of the regions of interest.
+        parameters (str): Additional parameters to display on the plot.
+        image_name (str): Name of image file to display
+        outlines (list): list of mask outlines
+        no_output (bool): boolean if to display resulting overlay (for testing)
+
+    Returns:
+        None
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+
+    ax1.imshow(img, cmap='gray')
+    ax1.set_title(f"Sample Image: {image_name}")
+    ax1.axis('off')
+
+    ax2.imshow(img)
+    ax2.set_title(parameters)
+    ax2.axis('off')
+
+    for i, o in enumerate(outlines):
+        y, x = np.nonzero(masks == (i + 1))
+        ymed = np.median(y)
+        xmed = np.median(x)
+        ax2.text(xmed, ymed, '%d' % (i), color='white')
+        ax2.plot(o[:, 0], o[:, 1], color='white')
+
+    if show_output:
+        plt.show()
+    else:
+        plt.close()

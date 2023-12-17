@@ -1,0 +1,20 @@
+{
+    "date": "0000-00-00",
+    "exp_ID": "TestExp",
+    "path": "tests\\test_resources\\Tester_01.tif",
+    "parse_ID": [
+        "Well",
+        "Trial"
+    ],
+    "separator": "_",
+    "multichannel": true,
+    "channel_info": [
+        "RFP",
+        "GFP"
+    ],
+    "channel_to_seg": "RFP",
+    "num_frames": 90,
+    "frame_to_seg": "all",
+    "frame_interval": 1,
+    "exp_note": "test note"
+}

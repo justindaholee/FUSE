@@ -207,6 +207,7 @@ class TestExperimentClass:
                                             visual_weight=0.4, must_overlap=True, 
                                             export_df=True)
         assert 'Label' in labeled_df.columns
+    
         
     def test_signal_derivation(self, setup):
         # Tests that the signal derivation function runs without errors

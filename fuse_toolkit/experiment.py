@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 import numpy as np
 import pandas as pd
+from ast import literal_eval
 from cellpose import models, utils
 from skimage import io, measure
 from tqdm.autonotebook import tqdm
@@ -292,7 +293,8 @@ class Experiment:
             iou_weight (float): Weight of intersectoin-over-union in labeling process
             visual_weight (float): Weight of visual characteristics in labeling
             must_overlap (bool): If True, same cells across frame must be overlapping
-            
+            export_df (bool): If True, exports results to CSV (default=True)
+
         Returns
             (pd.DataFrame) Updated experiment dataframe with new 'Label' column
         """
@@ -607,8 +609,9 @@ class Experiment:
     def _generate_labeling_df(self, df):
         """Generates and returns df with only labeling-relevant data"""
         labeling_df = df[["Frame", "ROI"]].copy()
-        labeling_df["x"] = [coord[0] for coord in df['Centroid']]
-        labeling_df["y"] = [coord[1] for coord in df['Centroid']]
+        centroids = df['Centroid'].apply(literal_eval)
+        df["x"] = centroids.apply(lambda coord: coord[0])
+        df["y"] = centroids.apply(lambda coord: coord[1])
         return labeling_df
     
     

@@ -68,8 +68,8 @@ class Library:
         for cell in np.unique(init_mask):
             if cell != 0:
                 cell_info = df[(df['Frame']==0) & (df['ROI']==(cell-1))]
-                x = cell_info['x'].iloc[0]
-                y = cell_info['y'].iloc[0]
+                x = cell_info.loc[0, 'x']
+                y = cell_info.loc[0, 'y']
                 new_cell = Cell(cell, cell, 0, x, y)
                 self.add_cell(new_cell)
         del cell, cell_info, x, y, new_cell

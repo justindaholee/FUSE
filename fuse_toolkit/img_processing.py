@@ -42,7 +42,7 @@ from tqdm.autonotebook import tqdm
 
 
 def read_multiframe_tif(filename: str,
-                         channel_selection: List[int]=[1]) -> list[np.ndarray]:
+                        channel_selection: List[int]=[1]) -> list[np.ndarray]:
     """
     Reads a multi-frame tif file and returns a list of ndarrays of frames
     for the selected channels.

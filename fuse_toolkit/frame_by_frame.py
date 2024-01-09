@@ -34,7 +34,7 @@ from .cell_similarity_metrics import calculate_iou, cosine_similarity
 
 
 def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame, 
-                   cell_vectors: dict, search_radius: float, connectivity: int,
+                   cell_vectors: dict, search_radius: float, connectivity: float,
                    iou_weight=0.6, visual_weight=0.4, must_overlap=True
                    ) -> Library:
     """
@@ -47,7 +47,7 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
         df: A pandas DataFrame containing information about each cell in each frame.
         cell_vectors: Dictionary with feature vectors for each cell.
         search_radius: Float value for max distance between similar cells.
-        connectivity: Integer value for minimum frames per lineage.
+        connectivity: Float value for minimum frames per lineage.
         iou_weight: float value to scale iou score by; default=0.6
         visual_weight: float value to scale visual score by; default=0.4
         must_overlap: boolean kconsider cells across frames only if they overlap

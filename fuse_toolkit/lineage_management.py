@@ -21,6 +21,7 @@ Classes:
 from typing import List, Dict, Union
 from collections import deque
 
+import heapq
 import pandas as pd
 import numpy as np
 
@@ -64,7 +65,7 @@ class Library:
         Returns:
             None
         """
-        self.lineages = []
+        self.lineages = {}
         for cell in np.unique(init_mask):
             if cell != 0:
                 cell_info = df[
@@ -85,10 +86,9 @@ class Library:
         Returns:
             None
         """
-        if cell.lineage_id > len(self.lineages):
-            self.lineages.extend(
-                deque() for _ in range(cell.lineage_id - len(self.lineages)))
-        self.lineages[cell.lineage_id-1].append(cell)
+        if cell.lineage_id not in self.lineages.keys():
+            self.lineages[cell.lineage_id] = deque()
+        self.lineages[cell.lineage_id].append(cell)
 
     def to_dataframe(self) -> pd.DataFrame:
         """
@@ -99,11 +99,11 @@ class Library:
             in the Library.
         """
         data = []
-        for i, lineage in enumerate(self.lineages):
+        for id, lineage in self.lineages.items():
             for cell in lineage:
                 data.append({
                     'cell_id': cell.cell_id,
-                    'lineage_id': i+1,
+                    'lineage_id': id,
                     'Frame': cell.frame,
                     'x': cell.x,
                     'y': cell.y
@@ -122,12 +122,12 @@ class Library:
             each attribute of the Cell object.
         """
         recent_cells = []
-        for i, lineage in enumerate(self.lineages):
+        for id, lineage in self.lineages.items():
             if len(lineage) > 0:
                 cell = lineage[-1]
                 recent_cells.append({
                     'cell_id': cell.cell_id,
-                    'lineage_id': i + 1,
+                    'lineage_id': id,
                     'frame': cell.frame,
                     'x': cell.x,
                     'y': cell.y
@@ -145,22 +145,21 @@ class Library:
         Returns:
             The lineage number the cell was found in if it is a recent cell; else, -1.
         """
-        for lineage_id, lineage in enumerate(self.lineages, start=1):
+        for id, lineage in self.lineages.items():
             if len(lineage) > 0:
                 recent_cell = lineage[-1]
                 if recent_cell.frame == frame and recent_cell.cell_id == cell_id:
-                    return lineage_id
+                    return id
         return -1
     
     def identify_cells(self, current_frame: int, scores: List[Dict], 
-                    iou_weight=0.6, visual_weight=0.4) -> None:
+                       iou_weight=0.6, visual_weight=0.4) -> None:
         """
         Find the best matching cell based on IoU and visual scores, and add it to the
         Lineage Library.
 
         Args:
             current_frame (int): Frame number of potential matching cells.
-            cell (dict): Reference cell with its features.
             scores (list of dict): Potential matching cells with their
                 features and scores.
             iou_weight (float): value to scale iou score by; default=0.6
@@ -175,41 +174,36 @@ class Library:
         min_vis_score = np.min(visual_scores)
         max_vis_score = np.max(visual_scores)
         vis_score_range = max_vis_score - min_vis_score
-
-        if vis_score_range != 0:
-            visual_scores = (visual_scores - min_vis_score) / vis_score_range
-        else:
-            visual_scores = np.ones_like(visual_scores)
-
+        visual_scores = ((visual_scores - min_vis_score) / vis_score_range
+                        if vis_score_range != 0 else np.ones_like(visual_scores))
         normalized_scores = (
             iou_weight * np.array([score['iou_score'] for score in scores]) +
-            visual_weight * visual_scores
-        )
+            visual_weight * visual_scores)
 
-        while scores:
-            match_index = np.argmax(normalized_scores)
-            
+        max_heap = [(-score, index) for index, score in enumerate(normalized_scores)]
+        heapq.heapify(max_heap)
+        
+        matched_cells = set()
+        matched_lineages = set()
+        while max_heap:
+            _, match_index = heapq.heappop(max_heap)
+            score = scores[match_index]
+            if (score['next_cell_id'] in matched_cells or
+                score['lineage_id'] in matched_lineages):
+                continue
             matched_cell = Cell(
-                cell_id = scores[match_index]['next_cell_id'],
-                lineage_id = scores[match_index]['lineage_id'],
+                cell_id = score['next_cell_id'],
+                lineage_id = score['lineage_id'],
                 frame = current_frame,
-                x = scores[match_index]['next_cell_x'],
-                y = scores[match_index]['next_cell_y']
-                )
+                x = score['next_cell_x'],
+                y = score['next_cell_y']
+            )
             self.add_cell(matched_cell)
-            
-            matched_cell_id = scores[match_index]['next_cell_id']
-            matched_lineage_id = scores[match_index]['lineage_id']
-
-            deletion_indices = [i for i, score in enumerate(scores)
-                               if score['next_cell_id'] == matched_cell_id or 
-                                  score['lineage_id'] == matched_lineage_id]
-            scores = [score for score in scores 
-                      if score['next_cell_id'] != matched_cell_id and
-                         score['lineage_id'] != matched_lineage_id]
-            normalized_scores = np.delete(normalized_scores, deletion_indices)      
+            matched_cells.add(score['next_cell_id'])
+            matched_lineages.add(score['lineage_id'])
     
-    def remove_short_lineages(self, min_percent: float, total_frames: int) -> None:
+    def remove_short_lineages(self, min_percent: float, total_frames: int,
+                              current_frame = -1) -> None:
             """
             Remove lineages that have been tracked for fewer frames than 
             min_percent/100*total_frames.
@@ -220,11 +214,31 @@ class Library:
                     be tracked for in order to be kept.
                 total_frames: int
                     Total number of frames in the video.
+                current_frame: int
+                    Current frame number indicating the progress of frame tracking.
 
             Returns:
                 None
             """
-            min_frames = min_percent / 100 * total_frames
-            self.lineages = [
-                lineage for lineage in self.lineages if len(lineage) >= min_frames
-                ]
+            if current_frame == -1:
+                effective_frames = total_frames
+            else:
+                effective_frames = current_frame
+            min_frames = min_percent / 100 * effective_frames
+            self.lineages = {
+                id: lineage for id, lineage in self.lineages.items() if len(lineage) >= round(min_frames)
+                }
+    
+    def remap_lineage_keys(self):
+        """
+        Remap the keys of the lineages dictionary to start from 1 and increment sequentially.
+
+        Returns:
+            None
+        """
+        new_lineages = {}
+        new_key = 1
+        for _, lineage in self.lineages.items():
+            new_lineages[new_key] = lineage
+            new_key += 1
+        self.lineages = new_lineages

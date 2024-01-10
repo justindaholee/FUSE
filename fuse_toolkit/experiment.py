@@ -381,19 +381,21 @@ class Experiment:
         return self.__df
 
 
-    def export_df(self, path=None):
+    def export_df(self, path=None, save_idx=False):
         """
         Exports the class's DataFrame of cell properties to a CSV file.
 
         Args:
             path (str or None): Destination path for CSV; uses default if None.
+            save_idx (bool): Whether indices are saved as an unnamed column in the csv
         """
         if self.__df is None:
             raise ValueError("Ensure that segmentation has been completed prior to df interaction.")
         if path is None:
-            self.__df.to_csv(os.path.join(self.__exp_folder, f"{self.__date}_{self.__expID}.csv"))
+            self.__df.to_csv(
+                os.path.join(self.__exp_folder, f"{self.__date}_{self.__expID}.csv"), index=save_idx)
         else:
-            self.__df.to_csv(path)
+            self.__df.to_csv(path, index=save_idx)
         
         
     def _determine_img_folder(self):

@@ -64,10 +64,11 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
             curr_mask = masks[current_frame]
             prev_mask = masks[recent_cell['frame']]
 
-            key = f'frame_{recent_cell["frame"]}_cell_{recent_cell["cell_id"]}'
-            if key not in cell_vectors:
+            recent_vec = get_cell_vector(recent_cell["frame"], 
+                                         recent_cell["cell_id"], 
+                                         cell_vectors)
+            if recent_vec is None:
                 continue
-            recent_vec = cell_vectors[key]
 
             new_cells = np.unique(curr_mask)[1:]
             new_cells = new_cells[new_cells != 0]
@@ -89,10 +90,11 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
                                             new_cell, mask)
 
                     if (must_overlap and iou_score > 0) or (not must_overlap):
-                        key = f'frame_{current_frame}_cell_{new_cell}'
-                        if key not in cell_vectors:
+                        new_vec = get_cell_vector(
+                            current_frame, new_cell, cell_vectors)
+                        if recent_vec is None:
                             continue
-                        new_vec = cell_vectors[key]
+                        
                         visual_score = cosine_similarity(recent_vec, new_vec)
 
                         distance = math.sqrt(
@@ -110,5 +112,25 @@ def frame_by_frame(lib: Library, masks: List[np.ndarray], df: pd.DataFrame,
                             'distance': distance
                             })
         lib.identify_cells(current_frame, scores, iou_weight, visual_weight)
-    lib.remove_short_lineages(connectivity, len(masks))
+        lib.remove_short_lineages(connectivity, len(masks), i+1)
+    lib.remap_lineage_keys()
     return lib
+
+def get_cell_vector(frame_num, cell_id, vector_dict):
+    """
+    Retreives the compressed vector version of a cell given the frame and cell_id
+    from the vector dictionary.
+
+    Args:
+        frame_num (int): the frame of the cell
+        cell_id (int): the ID number of the cell
+        vector_dict (dict): the dictionary of cell vectors for the dataset
+
+    Returns:
+        np.array: the compressed version of the cell image, the cell vector
+    """
+    key = f'frame_{frame_num}_cell_{cell_id}'
+    if key not in vector_dict:
+        return None
+    return vector_dict[key]
+    

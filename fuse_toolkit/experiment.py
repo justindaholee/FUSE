@@ -611,7 +611,8 @@ class Experiment:
     def _generate_labeling_df(self, df):
         """Generates and returns df with only labeling-relevant data"""
         labeling_df = df[["Frame", "ROI"]].copy()
-        centroids = df['Centroid'].apply(literal_eval)
+        centroids = df['Centroid'].apply(
+            lambda x: x if isinstance(x, tuple) else literal_eval(x))
         labeling_df["x"] = centroids.apply(lambda coord: coord[0])
         labeling_df["y"] = centroids.apply(lambda coord: coord[1])
         return labeling_df

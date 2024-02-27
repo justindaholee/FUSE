@@ -79,7 +79,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Copyright (c) 2023 University of Washington Department of Bioengineering
 
 ## Acknowledgments
-- Aida Moghadasi, Justin Daho Lee, Andre Berndt, PhD.
+- Justin Daho Lee, Sarah Wait, Aida Moghadasi, Andre Berndt, PhD.
 - University of Washington Department of Bioengineering, Mary Gates Research Endowment
 - [Cellpose](https://github.com/MouseLand/cellpose)
 

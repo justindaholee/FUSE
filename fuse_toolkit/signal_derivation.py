@@ -59,7 +59,7 @@ def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
         for ID in file_df[file_df['Channel'] == ch]['Label'].unique():
             cell_df = file_df[(file_df['Label'] == ID) & (file_df['Channel'] == ch)]
             base_F = cell_df.head(n_frames)['Intensity'].mean()
-            file_df.loc[cell_df.index, column_name] = cell_df['Intensity'] / base_F
+            file_df.loc[cell_df.index, column_name] = (cell_df['Intensity'] - base_F) / base_F
 
     merge_cols = ['ROI', 'Frame', 'Channel'] + parse_ID
     file_df = file_df[merge_cols + [column_name]].drop_duplicates(merge_cols)

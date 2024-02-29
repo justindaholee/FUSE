@@ -359,6 +359,9 @@ class Experiment:
         Returns:
             pd.DataFrame: A dataframe with new column for fluorescent change.
         '''
+        if 'Label' not in self.__df.columns:
+            raise ValueError('Labels not found; ensure cell-labeling is complete prior to signal derivation.')
+            
         func = self._validate_and_fetch_signal(signal_name, signal_params)
         if not output_name:
             output_name = signal_name

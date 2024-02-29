@@ -349,8 +349,7 @@ class Experiment:
             signal_params (dict): A dictionary containing the signal parameters,
                 contents will depend on the selected signal type:
               - "deltaFoverF0": 
-                    - "n_frames" (int): number of frames for baseline (from 0)
-                    - "channel" (str): channel to use fluorescent change (match experiment df)
+                    - "n_frames" (int): number of starting frames to use for baseline F (from 0)
               - "ratiometric": Resulting ratio will be 'channel_1'/'channel_2'
                     - "channel_1" (str): Name of 1st channel (match experiment df)
                     - "channel_2" (str): Name of 2nd channel (math experiment df)
@@ -708,7 +707,7 @@ class Experiment:
     def _validate_and_fetch_signal(self, signal_name, parameters):
         ''' Retrieves the signal function based on type and verifies signal_info'''
         required_params = {
-            'deltaFoverF0': ['n_frames', 'channel'],
+            'deltaFoverF0': ['n_frames'],
             'ratiometric': ['channel_1', 'channel_2']}
         signal_processing_functions = {
             'deltaFoverF0': signal_derivation.deltaF,

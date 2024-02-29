@@ -17,7 +17,7 @@ Dependencies:
 Functions:
 
     deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-           parse_ID: List[str], column_name: str, channel: str, n_frames: int =  5
+           parse_ID: List[str], column_name: str, n_frames: int =  5
            ) -> List[float]:
         Calculates the deltaF/F for each cell for a specific file and updates the
         signal list.
@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
-           parse_ID: List[str], column_name: str, channel: str, n_frames: int =  5
+           parse_ID: List[str], column_name: str, n_frames: int =  5
            ) -> List[float]:
     '''
     Calculates the deltaF/F for each cell in a dataframe for a specific file and updates
@@ -47,7 +47,6 @@ def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
         file_filter (List[bool]): A boolean filter for the specified file in the df.
         parse_ID (List[str]): A list of column names, file naming convention.
         column_name (str): The name of the column used for deltaF signal in the df.
-        channel (str): The channel to use for calculating deltaF/F.
         n_frames (int): The number of frames to use for calculating the baseline.
 
     Returns:
@@ -65,8 +64,7 @@ def deltaF(signal: List[float], df: pd.DataFrame, file_filter: List[bool],
     file_df = file_df[merge_cols + [column_name]].drop_duplicates(merge_cols)
     merged_df = df.merge(file_df, on=merge_cols, how='left')
 
-    channel_filter = (df['Channel'] == channel) & file_filter
-    updated_signal = np.where(channel_filter, merged_df[column_name].values, signal)
+    updated_signal = np.where(file_filter, merged_df[column_name].values, signal)
     return updated_signal.tolist()
 
 

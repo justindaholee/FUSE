@@ -228,9 +228,11 @@ class Experiment:
         saved in 'segmentations' folder within the experiment directory, metadata and
         extracted visual features of all ROIs are aggregated into dataframe. The df is
         returned by the funciton and optionally saved in the experiment directory.
+        Supported model types: 'cyto', 'cyto2', 'cyto3' and user-trained models.
 
         Args:
-            model_type (str): The type of model for Cellpose to use. (default='cyto2')
+            model_type (str): The type of model for Cellpose to use or path to
+                a custom-trained model. (default='cyto2')
             flow_threshold (float): Threshold for flow.
             mask_threshold (float): Threshold for mask probability.
             min_size (int): Minimum size of cells to segment.
@@ -464,11 +466,16 @@ class Experiment:
     
     def _initialize_model(self, model_type):
         """Initializes the segmentation model and returns it"""
-        # if Custom_Model:
-        #     return models.CellposeModel(gpu='use_GPU', pretrained_model=model_path)
-        # elif Omnipose:
-        #     return models.CellposeModel(gpu='use_GPU', model_type='cyto2_omni')
-        return models.Cellpose(gpu='use_GPU', model_type=model_type)
+        cellpose_models = {
+            'cyto', 'cyto2','cyto3'}
+        if model_type in cellpose_models:
+            return models.Cellpose(
+                gpu='use_GPU', model_type=model_type)
+        elif os.path.isfile(model_type):
+            return models.CellposeModel(
+                gpu='use_GPU', pretrained_model=model_type)
+        else:
+            raise ValueError(f"Invalid cellpose model: {model_type}")
     
     
     def _find_image_files(self, selected='ALL', filename_only=True):

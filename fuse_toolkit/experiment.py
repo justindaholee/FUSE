@@ -34,7 +34,6 @@ class Experiment:
         separator (str): Read-only. The separator used for parsing IDs.
         channel_info (list): Read-only. Information about the channels, split using the separator.
         channel_to_seg (str): Read-only. Information on which channel to segment.
-        num_frames (int): Read-only. The number of frames in the experiment.
         frame_interval (float): Read-only. The interval between frames.
         frame_to_seg (str/int): Read-only. The specific frame or 'all' frames to segment.
         exp_note (str): Read-only. Notes associated with the experiment.
@@ -62,7 +61,7 @@ class Experiment:
     """
     
     def __init__(self, date, exp_ID, path, parse_ID, separator, channel_info, 
-                 channel_to_seg, num_frames, frame_interval, frame_to_seg, exp_note):
+                 channel_to_seg, frame_interval, frame_to_seg, exp_note):
         """
         Initialize the Experiment object with the provided parameters, creates
         experiment directory if it doesn't yet exist and creates/updates experiment
@@ -76,7 +75,6 @@ class Experiment:
             separator (str): The separator used for parsing IDs.
             channel_info (str): A string of channel information to be split.
             channel_to_seg (str): Information on which channel to segment.
-            num_frames (int): The number of frames in the experiment.
             frame_interval (float): The interval between frames.
             frame_to_seg (str): The specific frame or 'all' frames to segment.
             exp_note (str): Notes associated with the experiment.
@@ -89,7 +87,6 @@ class Experiment:
         self.__separator = separator
         self.__channel_info = channel_info.split(sep=separator)
         self.__channel_to_seg = channel_to_seg
-        self.__num_frames = num_frames
         self.__frame_interval = frame_interval
         self.__frame_to_seg = self._parse_frame_to_segment(frame_to_seg)
         self.__exp_note = exp_note
@@ -122,7 +119,6 @@ class Experiment:
                    separator=separator,
                    channel_info=channel_info,
                    channel_to_seg=data.get('channel_to_seg', ''),
-                   num_frames=data.get('num_frames'),
                    frame_interval=data.get('frame_interval'),
                    frame_to_seg=str(data.get('frame_to_seg', 'all')),
                    exp_note=data.get('exp_note'))
@@ -154,10 +150,6 @@ class Experiment:
     @property
     def channel_to_seg(self):
         return self.__channel_to_seg
-
-    @property
-    def num_frames(self):
-        return self.__num_frames
 
     @property
     def frame_interval(self):
@@ -254,8 +246,7 @@ class Experiment:
 
         for path in tqdm(files, desc='files completed'):
             image = io.imread(path)
-            image = rearrange_dimensions(
-                image, self.__num_frames, self.__multichannel, self.__channel_info)
+            image = rearrange_dimensions(image)
             img_to_seg = self._prep_for_seg(image)
 
             masks, flows, styles, diams = model.eval(img_to_seg, channels=[0, 0],
@@ -441,7 +432,6 @@ class Experiment:
             "multichannel": self.__multichannel,
             "channel_info": self.__channel_info,
             "channel_to_seg": self.__channel_to_seg,
-            "num_frames": self.__num_frames,
             "frame_to_seg": self.__frame_to_seg,
             "frame_interval": self.__frame_interval,
             "exp_note": self.__exp_note
@@ -509,7 +499,7 @@ class Experiment:
     def _prepare_sample_image(self, image_path):
         """Isolates and prepares sample image, returns single image"""
         image = io.imread(image_path)
-        image = rearrange_dimensions(image, self.__num_frames, self.__multichannel, self.__channel_info)
+        image = rearrange_dimensions(image)
         image = image[self.__channel_info.index(self.__channel_to_seg)][0]
         return np.squeeze(image)
     

@@ -13,7 +13,6 @@
         "GFP"
     ],
     "channel_to_seg": "RFP",
-    "num_frames": 90,
     "frame_to_seg": "all",
     "frame_interval": 1,
     "exp_note": "test note"

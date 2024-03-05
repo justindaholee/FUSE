@@ -20,7 +20,6 @@ class TestExperimentClass:
         self.separator = '_'
         self.channel_info = 'RFP_GFP'
         self.channel_to_seg = 'RFP'
-        self.num_frames = 90
         self.frame_interval = 1
         self.frame_to_seg = 0
         self.exp_note = 'test note'
@@ -38,8 +37,8 @@ class TestExperimentClass:
     def test_initialization(self, setup):
         # Test if the Experiment object is initialized correctly
         experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
-                                self.channel_info, self.channel_to_seg, self.num_frames,
-                                self.frame_interval, self.frame_to_seg, self.exp_note)
+                                self.channel_info, self.channel_to_seg, self.frame_interval, 
+                                self.frame_to_seg, self.exp_note)
         assert experiment.date == self.date
         assert experiment.exp_ID == self.exp_ID
         assert experiment.path == self.path
@@ -47,7 +46,6 @@ class TestExperimentClass:
         assert experiment.separator == self.separator
         assert experiment.channel_info == self.channel_info.split(sep=self.separator)
         assert experiment.channel_to_seg == self.channel_to_seg
-        assert experiment.num_frames == self.num_frames
         assert experiment.frame_interval == self.frame_interval
         assert experiment.frame_to_seg == self.frame_to_seg
         assert experiment.exp_note == self.exp_note
@@ -65,8 +63,7 @@ class TestExperimentClass:
         # Test if the folder and its subdirectories are created correctly
         experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
                                 self.separator, self.channel_info, self.channel_to_seg,
-                                self.num_frames, self.frame_interval, self.frame_to_seg,
-                                self.exp_note)
+                                self.frame_interval, self.frame_to_seg, self.exp_note)
 
         # Main experiment folder
         assert os.path.exists(experiment.exp_folder) and os.path.isdir(
@@ -91,8 +88,7 @@ class TestExperimentClass:
         # Test if the info_exp.json file is created correctly
         experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
                                 self.separator, self.channel_info, self.channel_to_seg,
-                                self.num_frames, self.frame_interval, self.frame_to_seg,
-                                self.exp_note)
+                                self.frame_interval, self.frame_to_seg, self.exp_note)
         
         info_file_path = os.path.join(experiment.exp_folder, 'info_exp.json')
 
@@ -115,7 +111,6 @@ class TestExperimentClass:
         assert info_data['multichannel'] == (len(expected_channel_info) > 1)
         assert info_data['channel_info'] == expected_channel_info
         assert info_data['channel_to_seg'] == self.channel_to_seg
-        assert info_data['num_frames'] == self.num_frames
         assert info_data['frame_interval'] == self.frame_interval
         assert info_data['frame_to_seg'] == expected_frame_to_seg
         assert info_data['exp_note'] == self.exp_note
@@ -126,16 +121,16 @@ class TestExperimentClass:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
-                   self.channel_info, self.channel_to_seg, self.num_frames,
-                   self.frame_interval, self.frame_to_seg, self.exp_note)
-            modified = Experiment(self.date, self.exp_ID, self.path, self.parse_ID, self.separator,
-                self.channel_info, self.channel_to_seg, self.num_frames + 10, self.frame_interval,
-                self.frame_to_seg, "This is a secondary note.")
+                self.channel_info, self.channel_to_seg, self.frame_interval,
+                self.frame_to_seg, self.exp_note)
+            modified = Experiment(self.date, self.exp_ID, self.path, self.parse_ID, 
+                self.separator, self.channel_info, self.channel_to_seg, 
+                self.frame_interval + 2, self.frame_to_seg, "This is a secondary note.")
             assert len(w) == 1
-            assert "num_frames" in str(w[-1].message)
+            assert "frame_interval" in str(w[-1].message)
         with open(os.path.join(modified.exp_folder, 'info_exp.json'), 'r') as file:
             data = json.load(file)
-            assert data['num_frames'] == self.num_frames + 10
+            assert data['frame_interval'] == self.frame_interval + 2
             assert data['exp_note'].endswith("This is a secondary note.")
 
 
@@ -150,7 +145,6 @@ class TestExperimentClass:
         assert experiment.separator == self.separator
         assert experiment.channel_info == self.channel_info.split(self.separator)
         assert experiment.channel_to_seg == self.channel_to_seg
-        assert experiment.num_frames == self.num_frames
         assert experiment.frame_interval == self.frame_interval
         assert experiment.frame_to_seg == 'all'
         assert experiment.exp_note == self.exp_note
@@ -166,8 +160,7 @@ class TestExperimentClass:
         # Test if preview_segmentation() without errors
         experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
                                 self.separator, self.channel_info, self.channel_to_seg,
-                                self.num_frames, self.frame_interval, self.frame_to_seg,
-                                self.exp_note)
+                                self.frame_interval, self.frame_to_seg, self.exp_note)
 
         experiment.preview_segmentation(output=False)
 
@@ -176,8 +169,7 @@ class TestExperimentClass:
         # Tests that cell_segmentation() runs without errors and validates results
         experiment = Experiment(self.date, self.exp_ID, self.path, self.parse_ID,
                                 self.separator, self.channel_info, self.channel_to_seg,
-                                self.num_frames, self.frame_interval, self.frame_to_seg,
-                                self.exp_note)
+                                self.frame_interval, self.frame_to_seg, self.exp_note)
 
         result_df = experiment.segment_cells()
 

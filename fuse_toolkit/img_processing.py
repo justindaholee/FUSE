@@ -23,7 +23,7 @@ Functions:
                 channel: str) -> Dict[str, np.ndarray]:
         Extracts individual cell images from a multi-frame image and mask file, 
         and writes them to a dictionary.
-    rearrange_dimensions(image, num_frames, multichannel, channel_info):
+    rearrange_dimensions(image):
         Rearranges the dimensions of an image for downstream processing such
         that they are ordered as (channels, frames, height, width).
     show_overlay(img, masks, parameters, image_name, outlines):
@@ -145,46 +145,43 @@ def extract_cells(images_path: str, masks_path: str,
     del image_frames, mask_frames
     return cell_dict
 
-def rearrange_dimensions(image, num_frames, multichannel, channel_info):
-	"""
-	Rearranges the dimensions of an image for downstream processing such
-	that they are ordered as (channels, frames, height, width).
+def rearrange_dimensions(image):
+    """
+    Rearranges the dimensions of an image for downstream processing such
+    that they are ordered as (channels, frames, height, width).
 
-	Args:
-		image (numpy.ndarray): The input image.
-		num_frames (int): The number of frames in the image.
-		multichannel (bool): Whether the image has multiple channels.
-		channel_info (list): Information about the image channels.
+    Args:
+        image (ndarray): The input image.
 
-	Returns:
-		numpy.ndarray: The processed image with rearranged dimensions.
-	"""
-	try:
-		image_dim = image.shape
-		frame_dim_idx = image_dim.index(num_frames)
-		if image.ndim == 3 and not multichannel:
-			if frame_dim_idx == 0:
-				image = image[np.newaxis, :, :, :]
-			elif frame_dim_idx == 2:
-				image = image[:, :, np.newaxis, :]
-				image = np.transpose(image, (2, 3, 0, 1))
-		elif image.ndim == 4:
-			if frame_dim_idx == 0:
-				image = np.transpose(image, (1, 0, 2, 3))
-			elif frame_dim_idx == 2:
-				image = np.transpose(image, (3, 2, 0, 1))
-			elif frame_dim_idx == 3:
-				image = np.transpose(image, (2, 3, 0, 1))
-	except ValueError:
-		if image.ndim == 2:
-			image = image[np.newaxis, np.newaxis, :, :]
-		elif image.ndim == 3 and multichannel:
-			if image.index(len(channel_info)) == 0:
-				image = image[:, np.newaxis, :, :]
-			elif image.index(len(channel_info)) == 2:
-				image = image[:, :, :, np.newaxis]
-				image = np.transpose(image, (2, 3, 0, 1))
-	return image
+    Returns:
+        numpy.ndarray: The processed image with rearranged dimensions.
+    """
+    shape = image.shape
+    dim_indices = {'frames': -1, 'height': -1, 'width': -1, 'channels': -1}
+    sorted_dim_indices = sorted(range(len(shape)), key=lambda i: shape[i], reverse=True)
+    dim_indices['height'], dim_indices['width'] = sorted_dim_indices[:2]
+    for i, dim in enumerate(shape):
+        if dim in [1, 2, 3, 4] and i not in sorted_dim_indices[:2]:
+            if dim_indices['channels'] == -1:
+                dim_indices['channels'] = i
+        elif i not in sorted_dim_indices[:2]:
+            if dim_indices['frames'] == -1:
+                dim_indices['frames'] = i
+    for dim, idx in dim_indices.items():
+        if idx == -1:
+            if len(shape) == 2:
+                image = image[:, :, np.newaxis]
+                dim_indices[dim] = 2 
+            elif len(shape) == 3:
+                image = image[:, :, :, np.newaxis]
+                dim_indices[dim] = 3
+    ordered_dim_indices = (
+        dim_indices["channels"], dim_indices["frames"], 
+        dim_indices["height"], dim_indices["width"]
+    )
+    rearranged_image = np.transpose(
+        image, ordered_dim_indices)
+    return rearranged_image
 
 def show_overlay(img, masks, parameters, image_name, outlines, show_output=True):
     """

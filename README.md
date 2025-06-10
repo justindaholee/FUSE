@@ -3,7 +3,7 @@
 </h1>
 
 Specialized Pipeline for Cell Segmentation and Alignment of Time-Series Data
-<a target="_blank" href="https://colab.research.google.com/github/shanizu/FUSE/blob/main/FUSE.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/justindaholee/FUSE/blob/main/FUSE.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)

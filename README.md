@@ -40,7 +40,7 @@ Welcome to the `fuse-toolkit` package! Getting started is easy, and you have two
 
 ### Option 1: Interactive Analysis with Google Colab
 
-1. **Open the Colab Notebook**: Access our interactive notebook by clicking the "Open In Colab" badge at the top of this README. Alternatively, you can use [this link](https://colab.research.google.com/github/shanizu/FUSE/blob/main/FUSE.ipynb).
+1. **Open the Colab Notebook**: Access our interactive notebook by clicking the "Open In Colab" badge at the top of this README. Alternatively, you can use [this link](https://colab.research.google.com/github/justindaholee/FUSE/blob/main/FUSE.ipynb).
 
 2. **Create Your Copy**: In the Colab notebook, make your copy by selecting "File" in the top menu and then "Save a copy in Drive." This ensures you have an editable version.
 

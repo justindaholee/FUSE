@@ -181,7 +181,7 @@ class Experiment:
 
 
     def preview_segmentation(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0, 
-                             min_size=30,diameter=None, output=True):
+                             min_size=30, output=True):
         """
         Randomly selects an image from the experiment directory, runs segmentation on
         one frame with given parameter settings, and displays resulting masks. Returns
@@ -192,7 +192,6 @@ class Experiment:
             flow_threshold (float): Threshold for flow.
             mask_threshold (float): Threshold for mask probability.
             min_size (int): Minimum size of cells to segment.
-            diameter (int): Diameter of the cells. If None, a default value is used.
             output (bool): Flag to control output display.
 
         Returns:
@@ -206,23 +205,23 @@ class Experiment:
             print(chosen_image_path)
 
         image = self._prepare_sample_image(chosen_image_path)
-        masks, flows, styles, diams = model.eval(image,
+        masks, flows, styles = model.eval(image,
                                                  channels=[0, 0],
                                                  flow_threshold=flow_threshold,
                                                  cellprob_threshold=mask_threshold,
-                                                 min_size=min_size,
-                                                 diameter=diameter)
+                                                 min_size=min_size)
+                                                 
         info = (f"min_size: {min_size}, flow: {flow_threshold}, "
-                f"mask: {mask_threshold}, diameter: {diameter}")
+                f"mask: {mask_threshold}")
         show_overlay(image, masks, info, os.path.basename(chosen_image_path),
                      utils.outlines_list(masks), show_output=output)
 
-        del image, masks, flows, styles, diams
+        del image, masks, flows, styles
         return model
 
 
     def segment_cells(self, model_type='cyto2', flow_threshold=0.4, mask_threshold=0.0,
-                      min_size=30, diameter=None, export_df=True):
+                      min_size=30, export_df=True):
         """
         Performs cell segmentation on all cell images, resulting segmentation masks are
         saved in 'segmentations' folder within the experiment directory, metadata and
@@ -251,15 +250,15 @@ class Experiment:
             image = rearrange_dimensions(image)
             img_to_seg = self._prep_for_seg(image)
 
-            masks, flows, styles, diams = model.eval(img_to_seg, channels=[0, 0],
+            masks, flows, styles, = model.eval(img_to_seg, channels=[0, 0],
                                                      flow_threshold=flow_threshold,
                                                      cellprob_threshold=mask_threshold,
-                                                     min_size=min_size, diameter=diameter)
+                                                     min_size=min_size)
 
             self._export_masks(path, masks)
 
             file_properties = self._extract_image_properties(path, image, masks)
-            del img_to_seg, flows, styles, diams, masks
+            del img_to_seg, flows, styles, masks
 
             file_df = pd.DataFrame(file_properties)
             exp_df = pd.concat([exp_df, file_df], ignore_index=True)
@@ -469,7 +468,7 @@ class Experiment:
         cellpose_models = {
             'cyto', 'cyto2','cyto3'}
         if model_type in cellpose_models:
-            return models.Cellpose(
+            return models.CellposeModel(
                 gpu='use_GPU', model_type=model_type)
         elif os.path.isfile(model_type):
             return models.CellposeModel(
